@@ -30,14 +30,6 @@ export async function generateImageFromImage(input: ImageToImageInput): Promise<
   return imageToImageFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'imageToImagePrompt',
-  input: {schema: ImageToImageInputSchema},
-  output: {schema: ImageToImageOutputSchema},
-  prompt: `Generate an image based on the following prompt and the given image using the kontext model.\n\nPrompt: {{{prompt}}}\nImage: {{media url=image}}\n\nReturn the URL of the generated image.
-`,
-});
-
 const imageToImageFlow = ai.defineFlow(
   {
     name: 'imageToImageFlow',
@@ -45,9 +37,14 @@ const imageToImageFlow = ai.defineFlow(
     outputSchema: ImageToImageOutputSchema,
   },
   async input => {
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(
-      input.prompt
-    )}?model=kontext&image=${encodeURIComponent(input.image)}`;
-    return {imageUrl};
+    // The prompt for image-to-image with the kontext model is a bit different.
+    // The prompt itself should contain the image URL.
+    const fullPrompt = `${input.image} ${input.prompt}`;
+    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?model=kontext`;
+
+    // To ensure the URL is fresh and avoids caching issues.
+    const finalUrl = `${imageUrl}&seed=${Math.floor(Math.random() * 1000000)}`;
+    
+    return {imageUrl: finalUrl};
   }
 );

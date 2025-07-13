@@ -4,6 +4,8 @@
 import { z } from 'zod';
 import { textToImage } from '@/ai/flows/text-to-image';
 import { generateImageFromImage } from '@/ai/flows/image-to-image';
+import { generateTransparentImage } from '@/ai/flows/transparent-background-image';
+
 
 const FormSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required.'),
@@ -26,8 +28,9 @@ export async function generateImageAction(
   const validatedFields = FormSchema.safeParse(Object.fromEntries(formData.entries()));
 
   if (!validatedFields.success) {
+    const firstError = Object.values(validatedFields.error.flatten().fieldErrors)[0]?.[0];
     return {
-      error: validatedFields.error.flatten().fieldErrors.prompt?.[0] || 'Invalid input.',
+      error: firstError || 'Invalid input.',
     };
   }
 
@@ -43,7 +46,7 @@ export async function generateImageAction(
       }
       result = await generateImageFromImage({ prompt, image });
     } else if (mode === 'transparent-bg') {
-      result = await textToImage({ prompt, model: 'gptimage', transparent: true });
+      result = await generateTransparentImage({ prompt });
     } else {
       return { error: 'Invalid generation mode.' };
     }
@@ -55,6 +58,7 @@ export async function generateImageAction(
     return { imageUrl: result.imageUrl };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+    console.error('Generation Error:', errorMessage);
     return { error: errorMessage };
   }
 }
