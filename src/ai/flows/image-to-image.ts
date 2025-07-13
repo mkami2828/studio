@@ -10,13 +10,14 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { textToImage } from './text-to-image';
 
 const ImageToImageInputSchema = z.object({
   prompt: z.string().describe('Text prompt to guide the image generation.'),
   image: z
     .string()
     .describe(
-      "The input image to use as a base, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
+      "The input image to use as a base, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'"
     ),
 });
 export type ImageToImageInput = z.infer<typeof ImageToImageInputSchema>;
@@ -36,15 +37,14 @@ const imageToImageFlow = ai.defineFlow(
     inputSchema: ImageToImageInputSchema,
     outputSchema: ImageToImageOutputSchema,
   },
-  async input => {
-    // The prompt for image-to-image with the kontext model is a bit different.
-    // The prompt itself should contain the image URL.
-    const fullPrompt = `${input.image} ${input.prompt}`;
-    const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(fullPrompt)}?model=kontext`;
+  async ({ prompt, image }) => {
+    // The kontext model requires the image URL and prompt to be part of the main prompt.
+    // We will use the more generic textToImage flow to handle this.
+    const result = await textToImage({
+      prompt: `${image} ${prompt}`,
+      model: 'kontext',
+    });
 
-    // To ensure the URL is fresh and avoids caching issues.
-    const finalUrl = `${imageUrl}&seed=${Math.floor(Math.random() * 1000000)}`;
-    
-    return {imageUrl: finalUrl};
+    return { imageUrl: result.imageUrl };
   }
 );
