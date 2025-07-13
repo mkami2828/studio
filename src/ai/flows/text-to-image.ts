@@ -20,6 +20,10 @@ const TextToImageInputSchema = z.object({
   model: z.string().optional().describe('The model to use for image generation.'),
   transparent: z.boolean().optional().describe('Whether to generate a transparent background (gptimage model only).'),
   image: z.string().optional().describe('Image URL for image-to-image generation (kontext model only).'),
+  nologo: z.boolean().optional().describe('Disable the Pollinations logo overlay.'),
+  private: z.boolean().optional().describe('Prevent the image from appearing in the public feed.'),
+  enhance: z.boolean().optional().describe('Enhance the prompt using an LLM for more detail.'),
+  safe: z.boolean().optional().describe('Strict NSFW filtering.'),
 });
 
 export type TextToImageInput = z.infer<typeof TextToImageInputSchema>;
@@ -47,7 +51,11 @@ Parameters:
 {{#if seed}}Seed: {{seed}}{{/if}}
 {{#if model}}Model: {{model}}{{/if}}
 {{#if transparent}}Transparent: {{transparent}}{{/if}}
-{{#if image}}Image: {{image}}{{/if}}`,
+{{#if image}}Image: {{image}}{{/if}}
+{{#if nologo}}No Logo: {{nologo}}{{/if}}
+{{#if private}}Private: {{private}}{{/if}}
+{{#if enhance}}Enhance: {{enhance}}{{/if}}
+{{#if safe}}Safe: {{safe}}{{/if}}`,
 });
 
 const textToImageFlow = ai.defineFlow(
@@ -58,27 +66,42 @@ const textToImageFlow = ai.defineFlow(
   },
   async input => {
     // Construct the Pollinations AI API URL
-    let url = `https://image.pollinations.ai/prompt/${encodeURIComponent(input.prompt)}`;
+    const params = new URLSearchParams();
 
     if (input.width) {
-      url += `&width=${input.width}`;
+      params.append('width', input.width.toString());
     }
     if (input.height) {
-      url += `&height=${input.height}`;
+      params.append('height', input.height.toString());
     }
     if (input.seed) {
-      url += `&seed=${input.seed}`;
+      params.append('seed', input.seed.toString());
     }
     if (input.model) {
-      url += `&model=${input.model}`;
+      params.append('model', input.model);
     }
     if (input.transparent) {
-      url += `&transparent=${input.transparent}`;
+      params.append('transparent', input.transparent.toString());
     }
     if (input.image) {
-      url += `&image=${input.image}`;
+      params.append('image', input.image);
     }
-
+    if (input.nologo) {
+      params.append('nologo', input.nologo.toString());
+    }
+    if (input.private) {
+      params.append('private', input.private.toString());
+    }
+    if (input.enhance) {
+      params.append('enhance', input.enhance.toString());
+    }
+    if (input.safe) {
+      params.append('safe', input.safe.toString());
+    }
+    
+    const queryString = params.toString();
+    const url = `https://image.pollinations.ai/prompt/${encodeURIComponent(input.prompt)}${queryString ? `?${queryString}` : ''}`;
+    
     return {
       imageUrl: url,
     };

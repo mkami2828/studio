@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
-import { Download, Image as ImageIcon, LoaderCircle, Sparkles } from 'lucide-react';
+import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { generateImageAction, type ActionState } from '@/lib/actions';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Switch } from '@/components/ui/switch';
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
   const { pending } = useFormStatus();
@@ -36,6 +38,7 @@ export default function ImageGenerator() {
   
   const formRefText = useRef<HTMLFormElement>(null);
   const formRefTransparent = useRef<HTMLFormElement>(null);
+  const formRefImage = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state.error) {
@@ -59,7 +62,7 @@ export default function ImageGenerator() {
       const fileExtension = blob.type.split('/')[1] || 'png';
       a.download = `imageforge-ai-${Date.now()}.${fileExtension}`;
       document.body.appendChild(a);
-a.click();
+      a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
@@ -69,6 +72,20 @@ a.click();
         description: 'Could not download the image.',
         variant: 'destructive',
       });
+    }
+  };
+  
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result as string;
+        setImagePreview(result);
+        setImageDataUrl(result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -108,6 +125,52 @@ a.click();
                       <Label htmlFor="seed">Seed</Label>
                       <Input id="seed" name="seed" type="number" placeholder="42" />
                     </div>
+                    
+                    <Accordion type="single" collapsible>
+                      <AccordionItem value="advanced-settings">
+                        <AccordionTrigger>
+                          <div className="flex items-center gap-2">
+                            <Settings className="h-4 w-4" />
+                            Advanced Settings
+                          </div>
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="model">Model</Label>
+                            <Input id="model" name="model" type="text" placeholder="flux" />
+                          </div>
+                          <div className="flex items-center justify-between rounded-lg border p-3">
+                            <Label htmlFor="enhance" className="flex flex-col space-y-1">
+                              <span>Enhance Prompt</span>
+                              <span className="font-normal leading-snug text-muted-foreground text-xs">Let an LLM enhance your prompt for more detail.</span>
+                            </Label>
+                            <Switch id="enhance" name="enhance" />
+                          </div>
+                          <div className="flex items-center justify-between rounded-lg border p-3">
+                            <Label htmlFor="nologo" className="flex flex-col space-y-1">
+                              <span>No Logo</span>
+                              <span className="font-normal leading-snug text-muted-foreground text-xs">Disable the Pollinations logo overlay.</span>
+                            </Label>
+                            <Switch id="nologo" name="nologo" />
+                          </div>
+                           <div className="flex items-center justify-between rounded-lg border p-3">
+                            <Label htmlFor="private" className="flex flex-col space-y-1">
+                              <span>Private</span>
+                              <span className="font-normal leading-snug text-muted-foreground text-xs">Prevent image from appearing in public feed.</span>
+                            </Label>
+                            <Switch id="private" name="private" />
+                          </div>
+                          <div className="flex items-center justify-between rounded-lg border p-3">
+                            <Label htmlFor="safe" className="flex flex-col space-y-1">
+                              <span>Safe Mode</span>
+                              <span className="font-normal leading-snug text-muted-foreground text-xs">Strict NSFW filtering (throws error if detected).</span>
+                            </Label>
+                            <Switch id="safe" name="safe" />
+                          </div>
+                        </AccordionContent>
+                      </AccordionItem>
+                    </Accordion>
+
                     <SubmitButton>Generate</SubmitButton>
                   </form>
                 </TabsContent>

@@ -14,6 +14,11 @@ const FormSchema = z.object({
   height: z.coerce.number().optional(),
   seed: z.coerce.number().optional(),
   image: z.string().optional(),
+  model: z.string().optional(),
+  nologo: z.coerce.boolean().optional(),
+  private: z.coerce.boolean().optional(),
+  enhance: z.coerce.boolean().optional(),
+  safe: z.coerce.boolean().optional(),
 });
 
 export type ActionState = {
@@ -34,12 +39,12 @@ export async function generateImageAction(
     };
   }
 
-  const { mode, prompt, width, height, seed, image } = validatedFields.data;
+  const { mode, prompt, width, height, seed, image, model, nologo, private: isPrivate, enhance, safe } = validatedFields.data;
 
   try {
     let result;
     if (mode === 'text-to-image') {
-      result = await textToImage({ prompt, width, height, seed });
+      result = await textToImage({ prompt, width, height, seed, model, nologo, private: isPrivate, enhance, safe });
     } else if (mode === 'image-to-image') {
       if (!image) {
         return { error: 'An image is required for image-to-image generation.' };
