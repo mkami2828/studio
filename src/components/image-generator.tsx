@@ -35,7 +35,6 @@ export default function ImageGenerator() {
   const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
   
   const formRefText = useRef<HTMLFormElement>(null);
-  const formRefImage = useRef<HTMLFormElement>(null);
   const formRefTransparent = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
@@ -47,21 +46,6 @@ export default function ImageGenerator() {
       });
     }
   }, [state, toast]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const previewUrl = URL.createObjectURL(file);
-      setImagePreview(previewUrl);
-
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImageDataUrl(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const handleDownload = async () => {
     if (!state.imageUrl) return;
@@ -75,7 +59,7 @@ export default function ImageGenerator() {
       const fileExtension = blob.type.split('/')[1] || 'png';
       a.download = `imageforge-ai-${Date.now()}.${fileExtension}`;
       document.body.appendChild(a);
-      a.click();
+a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
@@ -99,9 +83,8 @@ export default function ImageGenerator() {
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="text-to-image">Text-to-Image</TabsTrigger>
-                  <TabsTrigger value="image-to-image">Image-to-Image</TabsTrigger>
                   <TabsTrigger value="transparent-bg">Transparent</TabsTrigger>
                 </TabsList>
                 <TabsContent value="text-to-image" className="mt-4">
@@ -126,26 +109,6 @@ export default function ImageGenerator() {
                       <Input id="seed" name="seed" type="number" placeholder="42" />
                     </div>
                     <SubmitButton>Generate</SubmitButton>
-                  </form>
-                </TabsContent>
-                <TabsContent value="image-to-image" className="mt-4">
-                  <form ref={formRefImage} action={dispatch} className="space-y-4">
-                    <input type="hidden" name="mode" value="image-to-image" />
-                    <input type="hidden" name="image" value={imageDataUrl || ''} />
-                    <div className="space-y-2">
-                      <Label htmlFor="image-upload">Upload Image</Label>
-                      <Input id="image-upload" type="file" accept="image/*" onChange={handleFileChange} required />
-                    </div>
-                    {imagePreview && (
-                      <div className="relative w-full aspect-square rounded-md overflow-hidden border">
-                         <Image src={imagePreview} alt="Image preview" layout="fill" objectFit="cover" />
-                      </div>
-                    )}
-                    <div className="space-y-2">
-                      <Label htmlFor="prompt-image">Prompt</Label>
-                      <Textarea id="prompt-image" name="prompt" placeholder="e.g., Turn this into a watercolor painting" required />
-                    </div>
-                    <SubmitButton>Generate Variation</SubmitButton>
                   </form>
                 </TabsContent>
                 <TabsContent value="transparent-bg" className="mt-4">
