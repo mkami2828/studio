@@ -31,15 +31,9 @@ export default function ImageGenerator() {
   const [state, dispatch] = useActionState(generateImageAction, initialState);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-image');
-  const [displayedImageUrl, setDisplayedImageUrl] = useState<string | null>(null);
 
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [imageDataUrl, setImageDataUrl] = useState<string | null>(null);
-  
   const formRefText = useRef<HTMLFormElement>(null);
   const formRefTransparent = useRef<HTMLFormElement>(null);
-  const formRefImage = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state.error) {
@@ -49,16 +43,13 @@ export default function ImageGenerator() {
         variant: 'destructive',
       });
     }
-    if (state.imageUrl) {
-        setDisplayedImageUrl(state.imageUrl);
-    }
   }, [state, toast]);
 
   const handleDownload = async () => {
-    if (!displayedImageUrl) return;
+    if (!state.imageUrl) return;
     try {
       toast({ title: 'Starting download...', description: 'Your image will be downloaded shortly.' });
-      const response = await fetch(displayedImageUrl);
+      const response = await fetch(state.imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -76,20 +67,6 @@ export default function ImageGenerator() {
         description: 'Could not download the image.',
         variant: 'destructive',
       });
-    }
-  };
-  
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const result = reader.result as string;
-        setImagePreview(result);
-        setImageDataUrl(result);
-      };
-      reader.readAsDataURL(file);
     }
   };
 
@@ -200,7 +177,7 @@ export default function ImageGenerator() {
                     <CardTitle>Result</CardTitle>
                     <CardDescription>Your generated image will appear here.</CardDescription>
                 </div>
-                 {displayedImageUrl && <Button variant="outline" size="sm" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download</Button>}
+                 {state.imageUrl && <Button variant="outline" size="sm" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download</Button>}
             </CardHeader>
             <CardContent>
               <div className="aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center bg-card-foreground/5 overflow-hidden">
@@ -209,8 +186,8 @@ export default function ImageGenerator() {
                     <LoaderCircle className="h-10 w-10 animate-spin" />
                     <p>Generating your masterpiece...</p>
                   </div>
-                ) : displayedImageUrl ? (
-                  <Image src={displayedImageUrl} alt="Generated image" width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
+                ) : state.imageUrl ? (
+                  <Image src={state.imageUrl} alt="Generated image" width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <ImageIcon className="h-10 w-10" />
