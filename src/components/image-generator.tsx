@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useState, useRef, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
 import { Download, Image as ImageIcon, LoaderCircle, Sparkles } from 'lucide-react';
 
@@ -26,7 +26,7 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 
 export default function ImageGenerator() {
   const initialState: ActionState = { imageUrl: null, error: null };
-  const [state, dispatch] = useFormState(generateImageAction, initialState);
+  const [state, dispatch] = useActionState(generateImageAction, initialState);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-image');
 
