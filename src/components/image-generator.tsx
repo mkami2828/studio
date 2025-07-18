@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef, useActionState } from 'react';
+import { useEffect, useState, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
 import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings, Trash2 } from 'lucide-react';
@@ -52,9 +52,6 @@ export default function ImageGenerator() {
   const [activeTab, setActiveTab] = useState('text-to-image');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
-
-  const formRefText = useRef<HTMLFormElement>(null);
-  const formRefTransparent = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     try {
@@ -151,7 +148,7 @@ export default function ImageGenerator() {
                   <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
                 <TabsContent value="text-to-image" className="mt-4">
-                  <form ref={formRefText} action={dispatch} className="space-y-4">
+                  <form action={dispatch} className="space-y-4">
                     <input type="hidden" name="mode" value="text-to-image" />
                     <div className="space-y-2">
                       <Label htmlFor="prompt-text">Prompt</Label>
@@ -221,7 +218,7 @@ export default function ImageGenerator() {
                   </form>
                 </TabsContent>
                 <TabsContent value="transparent-bg" className="mt-4">
-                   <form ref={formRefTransparent} action={dispatch} className="space-y-4">
+                   <form action={dispatch} className="space-y-4">
                     <input type="hidden" name="mode" value="transparent-bg" />
                     <div className="space-y-2">
                       <Label htmlFor="prompt-transparent">Prompt</Label>
