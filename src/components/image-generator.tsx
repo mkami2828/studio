@@ -31,6 +31,7 @@ export default function ImageGenerator() {
   const [state, dispatch] = useActionState(generateImageAction, initialState);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-image');
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   const formRefText = useRef<HTMLFormElement>(null);
   const formRefTransparent = useRef<HTMLFormElement>(null);
@@ -43,21 +44,25 @@ export default function ImageGenerator() {
         variant: 'destructive',
       });
     }
+    if (state.imageUrl) {
+      // Add a timestamp to the URL to force a re-render
+      setImageUrl(`${state.imageUrl}&t=${new Date().getTime()}`);
+    }
   }, [state, toast]);
 
   const handleDownload = async () => {
-    if (!state.imageUrl) return;
+    if (!imageUrl) return;
     try {
       toast({ title: 'Starting download...', description: 'Your image will be downloaded shortly.' });
-      const response = await fetch(state.imageUrl);
+      const response = await fetch(imageUrl);
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
       const fileExtension = blob.type.split('/')[1] || 'png';
-      a.download = `imageforge-ai-${Date.now()}.${fileExtension}`;
+      a.download = `arty-ai-${Date.now()}.${fileExtension}`;
       document.body.appendChild(a);
-      a.click();
+a.click();
       a.remove();
       window.URL.revokeObjectURL(url);
     } catch (error) {
@@ -160,7 +165,7 @@ export default function ImageGenerator() {
                     <input type="hidden" name="mode" value="transparent-bg" />
                     <div className="space-y-2">
                       <Label htmlFor="prompt-transparent">Prompt</Label>
-                      <Textarea id="prompt-transparent" name="prompt" placeholder="e.g., A company logo for 'ImageForge'" required />
+                      <Textarea id="prompt-transparent" name="prompt" placeholder="e.g., A company logo for 'Arty.ai'" required />
                     </div>
                      <p className="text-xs text-muted-foreground">Generates an image with a transparent background using the 'gptimage' model.</p>
                     <SubmitButton>Generate Transparent</SubmitButton>
@@ -177,7 +182,7 @@ export default function ImageGenerator() {
                     <CardTitle>Result</CardTitle>
                     <CardDescription>Your generated image will appear here.</CardDescription>
                 </div>
-                 {state.imageUrl && <Button variant="outline" size="sm" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download</Button>}
+                 {imageUrl && <Button variant="outline" size="sm" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download</Button>}
             </CardHeader>
             <CardContent>
               <div className="aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center bg-card-foreground/5 overflow-hidden">
@@ -186,8 +191,8 @@ export default function ImageGenerator() {
                     <LoaderCircle className="h-10 w-10 animate-spin" />
                     <p>Generating your masterpiece...</p>
                   </div>
-                ) : state.imageUrl ? (
-                  <Image src={state.imageUrl} alt="Generated image" width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
+                ) : imageUrl ? (
+                  <Image src={imageUrl} alt="Generated image" width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <ImageIcon className="h-10 w-10" />

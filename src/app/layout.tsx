@@ -3,7 +3,7 @@ import './globals.css';
 import { Toaster } from "@/components/ui/toaster"
 
 export const metadata: Metadata = {
-  title: 'ImageForge AI',
+  title: 'Arty.ai',
   description: 'Generate images with AI using Pollinations AI',
 };
 
