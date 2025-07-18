@@ -23,6 +23,7 @@ const FormSchema = z.object({
 
 export type ActionState = {
   imageUrl?: string | null;
+  prompt?: string | null;
   error?: string | null;
 };
 
@@ -60,10 +61,10 @@ export async function generateImageAction(
       throw new Error('Image generation failed: No image URL was returned.');
     }
 
-    return { imageUrl: result.imageUrl };
+    return { imageUrl: result.imageUrl, prompt: prompt };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
     console.error('Generation Error:', errorMessage);
-    return { error: errorMessage };
+    return { error: errorMessage, prompt: prompt };
   }
 }

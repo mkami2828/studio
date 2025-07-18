@@ -3,7 +3,7 @@
 import { useEffect, useState, useRef, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
-import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings } from 'lucide-react';
+import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings, Trash2 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,25 @@ import { useToast } from '@/hooks/use-toast';
 import { generateImageAction, type ActionState } from '@/lib/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Switch } from '@/components/ui/switch';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
+type HistoryItem = {
+  id: string;
+  prompt: string;
+  imageUrl: string;
+  timestamp: number;
+};
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
   const { pending } = useFormStatus();
@@ -27,14 +46,26 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 }
 
 export default function ImageGenerator() {
-  const initialState: ActionState = { imageUrl: null, error: null };
+  const initialState: ActionState = { imageUrl: null, error: null, prompt: null };
   const [state, dispatch] = useActionState(generateImageAction, initialState);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-image');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
 
   const formRefText = useRef<HTMLFormElement>(null);
   const formRefTransparent = useRef<HTMLFormElement>(null);
+
+  useEffect(() => {
+    try {
+      const storedHistory = localStorage.getItem('arty-ai-history');
+      if (storedHistory) {
+        setHistory(JSON.parse(storedHistory));
+      }
+    } catch (error) {
+      console.error("Failed to load history from localStorage", error);
+    }
+  }, []);
 
   useEffect(() => {
     if (state.error) {
@@ -44,27 +75,44 @@ export default function ImageGenerator() {
         variant: 'destructive',
       });
     }
-    if (state.imageUrl) {
-      // Add a timestamp to the URL to force a re-render
-      setImageUrl(`${state.imageUrl}&t=${new Date().getTime()}`);
+    if (state.imageUrl && state.prompt) {
+      const newImageUrl = state.imageUrl.startsWith('data:') ? state.imageUrl : `${state.imageUrl}&t=${new Date().getTime()}`;
+      setImageUrl(newImageUrl);
+
+      const newItem: HistoryItem = {
+        id: `arty-ai-${Date.now()}`,
+        prompt: state.prompt,
+        imageUrl: newImageUrl,
+        timestamp: Date.now(),
+      };
+
+      setHistory(prevHistory => {
+        const updatedHistory = [newItem, ...prevHistory];
+        try {
+          localStorage.setItem('arty-ai-history', JSON.stringify(updatedHistory));
+        } catch (error) {
+          console.error("Failed to save history to localStorage", error);
+        }
+        return updatedHistory;
+      });
     }
   }, [state, toast]);
-
-  const handleDownload = async () => {
-    if (!imageUrl) return;
+  
+  const handleDownload = async (url: string) => {
+    if (!url) return;
     try {
       toast({ title: 'Starting download...', description: 'Your image will be downloaded shortly.' });
-      const response = await fetch(imageUrl);
+      const response = await fetch(url);
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const blobUrl = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = blobUrl;
       const fileExtension = blob.type.split('/')[1] || 'png';
       a.download = `arty-ai-${Date.now()}.${fileExtension}`;
       document.body.appendChild(a);
-a.click();
+      a.click();
       a.remove();
-      window.URL.revokeObjectURL(url);
+      window.URL.revokeObjectURL(blobUrl);
     } catch (error) {
       console.error('Download failed:', error);
       toast({
@@ -75,6 +123,17 @@ a.click();
     }
   };
 
+  const handleClearHistory = () => {
+    setHistory([]);
+    try {
+      localStorage.removeItem('arty-ai-history');
+      toast({ title: 'History Cleared', description: 'Your image generation history has been removed.' });
+    } catch (error) {
+      console.error("Failed to clear history from localStorage", error);
+    }
+  };
+
+
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -82,13 +141,14 @@ a.click();
           <Card>
             <CardHeader>
               <CardTitle>Image Generation</CardTitle>
-              <CardDescription>Select a mode and enter your prompt to generate an image.</CardDescription>
+              <CardDescription>Create new images or view your history.</CardDescription>
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-3">
                   <TabsTrigger value="text-to-image">Text-to-Image</TabsTrigger>
                   <TabsTrigger value="transparent-bg">Transparent</TabsTrigger>
+                  <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
                 <TabsContent value="text-to-image" className="mt-4">
                   <form ref={formRefText} action={dispatch} className="space-y-4">
@@ -171,6 +231,53 @@ a.click();
                     <SubmitButton>Generate Transparent</SubmitButton>
                   </form>
                 </TabsContent>
+                <TabsContent value="history" className="mt-4">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm text-muted-foreground">Your past generations.</p>
+                      {history.length > 0 && (
+                         <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="outline" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Clear</Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This will permanently delete your entire generation history. This action cannot be undone.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={handleClearHistory}>Continue</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
+                      )}
+                    </div>
+                    <ScrollArea className="h-96 w-full rounded-md border">
+                      <div className="p-4 space-y-4">
+                        {history.length === 0 ? (
+                          <p className="text-center text-muted-foreground py-16">No history yet. Generate an image to get started!</p>
+                        ) : (
+                          history.map(item => (
+                             <Card key={item.id} className="overflow-hidden">
+                              <div className="aspect-square w-full bg-card-foreground/5 relative">
+                                <Image src={item.imageUrl} alt={item.prompt} layout="fill" className="object-contain" data-ai-hint="gallery photo" />
+                              </div>
+                              <div className="p-3">
+                                <p className="text-xs text-muted-foreground truncate">{item.prompt}</p>
+                                 <Button variant="ghost" size="sm" className="w-full justify-start mt-2" onClick={() => handleDownload(item.imageUrl)}>
+                                  <Download className="mr-2 h-4 w-4" /> Download
+                                </Button>
+                              </div>
+                            </Card>
+                          ))
+                        )}
+                      </div>
+                    </ScrollArea>
+                  </div>
+                </TabsContent>
               </Tabs>
             </CardContent>
           </Card>
@@ -182,7 +289,7 @@ a.click();
                     <CardTitle>Result</CardTitle>
                     <CardDescription>Your generated image will appear here.</CardDescription>
                 </div>
-                 {imageUrl && <Button variant="outline" size="sm" onClick={handleDownload}><Download className="mr-2 h-4 w-4" /> Download</Button>}
+                 {imageUrl && <Button variant="outline" size="sm" onClick={() => handleDownload(imageUrl)}><Download className="mr-2 h-4 w-4" /> Download</Button>}
             </CardHeader>
             <CardContent>
               <div className="aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center bg-card-foreground/5 overflow-hidden">
@@ -192,7 +299,7 @@ a.click();
                     <p>Generating your masterpiece...</p>
                   </div>
                 ) : imageUrl ? (
-                  <Image src={imageUrl} alt="Generated image" width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
+                  <Image src={imageUrl} alt={state.prompt || "Generated image"} width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
                 ) : (
                   <div className="flex flex-col items-center gap-2 text-muted-foreground">
                     <ImageIcon className="h-10 w-10" />
