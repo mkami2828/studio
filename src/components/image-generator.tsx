@@ -3,7 +3,7 @@
 import { useEffect, useState, useActionState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
-import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings, Trash2 } from 'lucide-react';
+import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings, Trash2, Dices } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -27,6 +27,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import samplePrompts from '@/lib/prompts.json';
 
 type HistoryItem = {
   id: string;
@@ -47,6 +48,7 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 
 export default function ImageGenerator() {
   const formRef = useRef<HTMLFormElement>(null);
+  const promptRef = useRef<HTMLTextAreaElement>(null);
   const initialState: ActionState = { imageUrl: null, error: null, prompt: null };
   const [state, dispatch] = useActionState(generateImageAction, initialState);
   const { toast } = useToast();
@@ -61,7 +63,7 @@ export default function ImageGenerator() {
         setHistory(JSON.parse(storedHistory));
       }
     } catch (error) {
-      console.error("Failed to load history from localStorage", error);
+        console.error("Failed to load history from localStorage", error);
     }
   }, []);
 
@@ -133,6 +135,14 @@ export default function ImageGenerator() {
     }
   };
 
+  const handleRandomPrompt = () => {
+    if (promptRef.current) {
+      const randomPrompt = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
+      promptRef.current.value = randomPrompt;
+      // Manually trigger a change event if needed by other hooks, though setting value directly is often enough
+      promptRef.current.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+  };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -153,8 +163,14 @@ export default function ImageGenerator() {
                   <form ref={formRef} action={dispatch} className="space-y-4">
                     <input type="hidden" name="mode" value="text-to-image" />
                     <div className="space-y-2">
-                      <Label htmlFor="prompt-text">Prompt</Label>
-                      <Textarea id="prompt-text" name="prompt" placeholder="e.g., A beautiful sunset over the ocean" required />
+                       <div className="flex justify-between items-center">
+                        <Label htmlFor="prompt-text">Prompt</Label>
+                        <Button type="button" variant="ghost" size="sm" onClick={handleRandomPrompt}>
+                          <Dices className="mr-2 h-4 w-4" />
+                          Random
+                        </Button>
+                      </div>
+                      <Textarea id="prompt-text" name="prompt" ref={promptRef} placeholder="e.g., A beautiful sunset over the ocean" required />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
