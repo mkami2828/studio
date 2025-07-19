@@ -28,6 +28,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import samplePrompts from '@/lib/prompts.json';
+import { cn } from '@/lib/utils';
 
 type HistoryItem = {
   id: string;
@@ -147,7 +148,7 @@ export default function ImageGenerator() {
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1">
+        <div className={cn("lg:col-span-1", activeTab === 'history' && 'lg:col-span-3')}>
           <Card>
             <CardHeader>
               <CardTitle>Image Generation</CardTitle>
@@ -260,25 +261,27 @@ export default function ImageGenerator() {
                       )}
                     </div>
                     <ScrollArea className="h-96 w-full rounded-md border">
-                      <div className="p-4 space-y-4">
                         {history.length === 0 ? (
-                          <p className="text-center text-muted-foreground py-16">No history yet. Generate an image to get started!</p>
+                          <div className="flex h-full items-center justify-center">
+                            <p className="text-center text-muted-foreground py-16">No history yet. Generate an image to get started!</p>
+                          </div>
                         ) : (
-                          history.map(item => (
-                             <Card key={item.id} className="overflow-hidden">
-                              <div className="aspect-square w-full bg-card-foreground/5 relative">
-                                <Image src={item.imageUrl} alt={item.prompt} layout="fill" className="object-contain" data-ai-hint="gallery photo" />
-                              </div>
-                              <div className="p-3">
-                                <p className="text-xs text-muted-foreground truncate">{item.prompt}</p>
-                                 <Button variant="ghost" size="sm" className="w-full justify-start mt-2" onClick={() => handleDownload(item.imageUrl)}>
-                                  <Download className="mr-2 h-4 w-4" /> Download
-                                </Button>
-                              </div>
-                            </Card>
-                          ))
+                          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+                            {history.map(item => (
+                              <Card key={item.id} className="overflow-hidden group">
+                                <div className="aspect-square w-full bg-card-foreground/5 relative">
+                                  <Image src={item.imageUrl} alt={item.prompt} layout="fill" className="object-contain" data-ai-hint="gallery photo" />
+                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
+                                    <p className="text-xs text-primary-foreground line-clamp-4 mb-2">{item.prompt}</p>
+                                    <Button variant="secondary" size="sm" className="h-8" onClick={() => handleDownload(item.imageUrl)}>
+                                      <Download className="mr-2 h-4 w-4" /> Download
+                                    </Button>
+                                  </div>
+                                </div>
+                              </Card>
+                            ))}
+                          </div>
                         )}
-                      </div>
                     </ScrollArea>
                   </div>
                 </TabsContent>
@@ -286,34 +289,36 @@ export default function ImageGenerator() {
             </CardContent>
           </Card>
         </div>
-        <div className="lg:col-span-2">
-          <Card className="h-full">
-             <CardHeader className="flex flex-row items-center justify-between">
-                <div>
-                    <CardTitle>Result</CardTitle>
-                    <CardDescription>Your generated image will appear here.</CardDescription>
+        {activeTab === 'text-to-image' && (
+          <div className="lg:col-span-2">
+            <Card className="h-full">
+              <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                      <CardTitle>Result</CardTitle>
+                      <CardDescription>Your generated image will appear here.</CardDescription>
+                  </div>
+                  {imageUrl && <Button variant="outline" size="sm" onClick={() => handleDownload(imageUrl)}><Download className="mr-2 h-4 w-4" /> Download</Button>}
+              </CardHeader>
+              <CardContent>
+                <div className="aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center bg-card-foreground/5 overflow-hidden">
+                  {useFormStatus().pending ? (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <LoaderCircle className="h-10 w-10 animate-spin" />
+                      <p>Generating your masterpiece...</p>
+                    </div>
+                  ) : imageUrl ? (
+                    <Image src={imageUrl} alt={state.prompt || "Generated image"} width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
+                      <ImageIcon className="h-10 w-10" />
+                      <p>The magic happens here</p>
+                    </div>
+                  )}
                 </div>
-                 {imageUrl && <Button variant="outline" size="sm" onClick={() => handleDownload(imageUrl)}><Download className="mr-2 h-4 w-4" /> Download</Button>}
-            </CardHeader>
-            <CardContent>
-              <div className="aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center bg-card-foreground/5 overflow-hidden">
-                {useFormStatus().pending ? (
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <LoaderCircle className="h-10 w-10 animate-spin" />
-                    <p>Generating your masterpiece...</p>
-                  </div>
-                ) : imageUrl ? (
-                  <Image src={imageUrl} alt={state.prompt || "Generated image"} width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
-                ) : (
-                  <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                    <ImageIcon className="h-10 w-10" />
-                    <p>The magic happens here</p>
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
