@@ -4,12 +4,10 @@
 import { z } from 'zod';
 import { textToImage } from '@/ai/flows/text-to-image';
 import { generateImageFromImage } from '@/ai/flows/image-to-image';
-import { generateTransparentImage } from '@/ai/flows/transparent-background-image';
-
 
 const FormSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required.'),
-  mode: z.enum(['text-to-image', 'image-to-image', 'transparent-bg']),
+  mode: z.enum(['text-to-image', 'image-to-image']),
   width: z.coerce.number().optional(),
   height: z.coerce.number().optional(),
   seed: z.coerce.number().optional(),
@@ -51,8 +49,6 @@ export async function generateImageAction(
         return { error: 'An image is required for image-to-image generation.' };
       }
       result = await generateImageFromImage({ prompt, image });
-    } else if (mode === 'transparent-bg') {
-      result = await generateTransparentImage({ prompt });
     } else {
       return { error: 'Invalid generation mode.' };
     }

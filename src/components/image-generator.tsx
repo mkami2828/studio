@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useActionState } from 'react';
+import { useEffect, useState, useActionState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
 import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings, Trash2 } from 'lucide-react';
@@ -46,6 +46,7 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 }
 
 export default function ImageGenerator() {
+  const formRef = useRef<HTMLFormElement>(null);
   const initialState: ActionState = { imageUrl: null, error: null, prompt: null };
   const [state, dispatch] = useActionState(generateImageAction, initialState);
   const { toast } = useToast();
@@ -92,6 +93,8 @@ export default function ImageGenerator() {
         }
         return updatedHistory;
       });
+      // Don't reset the form
+      // formRef.current?.reset();
     }
   }, [state, toast]);
   
@@ -142,13 +145,12 @@ export default function ImageGenerator() {
             </CardHeader>
             <CardContent>
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
+                <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="text-to-image">Text-to-Image</TabsTrigger>
-                  <TabsTrigger value="transparent-bg">Transparent</TabsTrigger>
                   <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
                 <TabsContent value="text-to-image" className="mt-4">
-                  <form action={dispatch} className="space-y-4">
+                  <form ref={formRef} action={dispatch} className="space-y-4">
                     <input type="hidden" name="mode" value="text-to-image" />
                     <div className="space-y-2">
                       <Label htmlFor="prompt-text">Prompt</Label>
@@ -215,17 +217,6 @@ export default function ImageGenerator() {
                     </Accordion>
 
                     <SubmitButton>Generate</SubmitButton>
-                  </form>
-                </TabsContent>
-                <TabsContent value="transparent-bg" className="mt-4">
-                   <form action={dispatch} className="space-y-4">
-                    <input type="hidden" name="mode" value="transparent-bg" />
-                    <div className="space-y-2">
-                      <Label htmlFor="prompt-transparent">Prompt</Label>
-                      <Textarea id="prompt-transparent" name="prompt" placeholder="e.g., A company logo for 'Arty.ai'" required />
-                    </div>
-                     <p className="text-xs text-muted-foreground">Generates an image with a transparent background using the 'gptimage' model.</p>
-                    <SubmitButton>Generate Transparent</SubmitButton>
                   </form>
                 </TabsContent>
                 <TabsContent value="history" className="mt-4">
