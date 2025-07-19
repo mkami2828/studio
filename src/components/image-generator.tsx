@@ -70,6 +70,88 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
   );
 }
 
+function ResultPanel() {
+  const { pending } = useFormStatus();
+  const [state, _] = useActionState(generateImageAction, { imageUrl: null, error: null, prompt: null });
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (state.imageUrl) {
+      const newImageUrl = state.imageUrl.startsWith('data:') ? state.imageUrl : `${state.imageUrl}&t=${new Date().getTime()}`;
+      setImageUrl(newImageUrl);
+    }
+  }, [state.imageUrl]);
+
+  const handleDownload = async (url: string) => {
+    if (!url) return;
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      const fileExtension = blob.type.split('/')[1] || 'png';
+      a.download = `arty-ai-${Date.now()}.${fileExtension}`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (error) {
+      console.error('Download failed:', error);
+    }
+  };
+
+  const handleCopyPrompt = () => {
+    if (state.prompt) {
+      navigator.clipboard.writeText(state.prompt);
+    }
+  };
+
+  return (
+    <Card className="h-full">
+      <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+              <CardTitle>Result</CardTitle>
+              <CardDescription>Your generated image will appear here.</CardDescription>
+          </div>
+          {imageUrl && !pending && (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={handleCopyPrompt}><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
+              <Button variant="outline" size="sm" onClick={() => handleDownload(imageUrl)}><Download className="mr-2 h-4 w-4" /> Download</Button>
+            </div>
+          )}
+      </CardHeader>
+      <CardContent>
+        <div className="aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center bg-card-foreground/5 overflow-hidden">
+          {pending ? (
+            <div className="flex flex-col items-center justify-center gap-4 text-foreground p-8">
+              <div className="relative h-24 w-24">
+                  <div className="absolute inset-0 bg-primary/30 rounded-full animate-ping"></div>
+                  <div className="relative flex items-center justify-center h-full w-full bg-primary/50 rounded-full">
+                      <Sparkles className="h-12 w-12 text-primary-foreground animate-pulse" />
+                  </div>
+              </div>
+              <p className="text-lg font-semibold tracking-wider">
+                  Conjuring creativity...
+              </p>
+              <p className="text-sm text-muted-foreground">
+                  Please wait while the AI works its magic.
+              </p>
+            </div>
+          ) : imageUrl ? (
+            <Image src={imageUrl} alt={state.prompt || "Generated image"} width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
+          ) : (
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <ImageIcon className="h-10 w-10" />
+              <p>The magic happens here</p>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function ImageGenerator() {
   const formRef = useRef<HTMLFormElement>(null);
   const promptRef = useRef<HTMLTextAreaElement>(null);
@@ -77,7 +159,6 @@ export default function ImageGenerator() {
   const [state, dispatch] = useActionState(generateImageAction, initialState);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-image');
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedLayout, setSelectedLayout] = useState<LayoutKey>('default');
   
@@ -105,7 +186,6 @@ export default function ImageGenerator() {
     }
     if (state.imageUrl && state.prompt) {
       const newImageUrl = state.imageUrl.startsWith('data:') ? state.imageUrl : `${state.imageUrl}&t=${new Date().getTime()}`;
-      setImageUrl(newImageUrl);
 
       const newItem: HistoryItem = {
         id: `arty-ai-${Date.now()}`,
@@ -351,47 +431,7 @@ export default function ImageGenerator() {
         </div>
         {activeTab === 'text-to-image' && (
           <div className="lg:col-span-2">
-            <Card className="h-full">
-              <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                      <CardTitle>Result</CardTitle>
-                      <CardDescription>Your generated image will appear here.</CardDescription>
-                  </div>
-                  {imageUrl && (
-                    <div className="flex items-center gap-2">
-                      <Button variant="outline" size="sm" onClick={handleCopyPrompt}><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
-                      <Button variant="outline" size="sm" onClick={() => handleDownload(imageUrl)}><Download className="mr-2 h-4 w-4" /> Download</Button>
-                    </div>
-                  )}
-              </CardHeader>
-              <CardContent>
-                <div className="aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center bg-card-foreground/5 overflow-hidden">
-                  {useFormStatus().pending ? (
-                    <div className="flex flex-col items-center justify-center gap-4 text-foreground p-8">
-                      <div className="relative h-24 w-24">
-                          <div className="absolute inset-0 bg-primary/30 rounded-full animate-ping"></div>
-                          <div className="relative flex items-center justify-center h-full w-full bg-primary/50 rounded-full">
-                              <Sparkles className="h-12 w-12 text-primary-foreground animate-pulse" />
-                          </div>
-                      </div>
-                      <p className="text-lg font-semibold tracking-wider">
-                          Conjuring creativity...
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                          Please wait while the AI works its magic.
-                      </p>
-                    </div>
-                  ) : imageUrl ? (
-                    <Image src={imageUrl} alt={state.prompt || "Generated image"} width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
-                  ) : (
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <ImageIcon className="h-10 w-10" />
-                      <p>The magic happens here</p>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+            <ResultPanel />
           </div>
         )}
       </div>
