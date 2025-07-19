@@ -3,7 +3,7 @@
 import { useEffect, useState, useActionState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
-import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings, Trash2, Dices } from 'lucide-react';
+import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings, Trash2, Dices, Copy, RotateCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -50,6 +50,14 @@ const layouts = {
 type LayoutKey = keyof typeof layouts;
 
 const models = ["flux", "kontext", "turbo", "gptimage"];
+
+const defaultAdvancedSettings = {
+    model: 'flux',
+    enhance: false,
+    nologo: false,
+    private: false,
+    safe: false
+};
 
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
@@ -112,8 +120,6 @@ export default function ImageGenerator() {
         }
         return updatedHistory;
       });
-      // Don't reset the form
-      // formRef.current?.reset();
     }
   }, [state, toast]);
   
@@ -156,10 +162,39 @@ export default function ImageGenerator() {
     if (promptRef.current) {
       const randomPrompt = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
       promptRef.current.value = randomPrompt;
-      // Manually trigger a change event if needed by other hooks, though setting value directly is often enough
       promptRef.current.dispatchEvent(new Event('input', { bubbles: true }));
     }
   };
+
+  const handleCopyPrompt = () => {
+    if (state.prompt) {
+      navigator.clipboard.writeText(state.prompt);
+      toast({ title: 'Prompt Copied!', description: 'The prompt has been copied to your clipboard.' });
+    }
+  };
+
+  const handleResetAdvanced = () => {
+    if (formRef.current) {
+        const form = formRef.current;
+        const modelSelect = form.elements.namedItem('model-select') as HTMLSelectElement | null;
+        if(modelSelect) modelSelect.value = defaultAdvancedSettings.model;
+        
+        const enhanceSwitch = form.elements.namedItem('enhance') as HTMLInputElement | null;
+        if(enhanceSwitch) enhanceSwitch.checked = defaultAdvancedSettings.enhance;
+
+        const nologoSwitch = form.elements.namedItem('nologo') as HTMLInputElement | null;
+        if(nologoSwitch) nologoSwitch.checked = defaultAdvancedSettings.nologo;
+
+        const privateSwitch = form.elements.namedItem('private') as HTMLInputElement | null;
+        if(privateSwitch) privateSwitch.checked = defaultAdvancedSettings.private;
+
+        const safeSwitch = form.elements.namedItem('safe') as HTMLInputElement | null;
+        if(safeSwitch) safeSwitch.checked = defaultAdvancedSettings.safe;
+
+        toast({ title: 'Advanced settings reset' });
+    }
+  };
+
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
@@ -190,7 +225,7 @@ export default function ImageGenerator() {
                           Random
                         </Button>
                       </div>
-                      <Textarea id="prompt-text" name="prompt" ref={promptRef} placeholder="e.g., A beautiful sunset over the ocean" required />
+                      <Textarea id="prompt-text" name="prompt" ref={promptRef} placeholder="e.g., A beautiful sunset over the ocean" required defaultValue={state.prompt ?? ''} />
                     </div>
 
                     <div className="space-y-2">
@@ -221,10 +256,16 @@ export default function ImageGenerator() {
                           </div>
                         </AccordionTrigger>
                         <AccordionContent className="space-y-4 pt-4">
+                           <div className="flex justify-end">
+                            <Button type="button" variant="ghost" size="sm" onClick={handleResetAdvanced}>
+                              <RotateCcw className="mr-2 h-4 w-4" />
+                              Reset
+                            </Button>
+                          </div>
                           <div className="space-y-2">
-                            <Label htmlFor="model">Model</Label>
-                            <Select name="model" defaultValue="flux">
-                              <SelectTrigger id="model">
+                            <Label htmlFor="model-select">Model</Label>
+                            <Select name="model" defaultValue={defaultAdvancedSettings.model} >
+                              <SelectTrigger id="model-select">
                                 <SelectValue placeholder="Select a model" />
                               </SelectTrigger>
                               <SelectContent>
@@ -239,28 +280,28 @@ export default function ImageGenerator() {
                               <span>Enhance Prompt</span>
                               <span className="font-normal leading-snug text-muted-foreground text-xs">Let an LLM enhance your prompt for more detail.</span>
                             </Label>
-                            <Switch id="enhance" name="enhance" />
+                            <Switch id="enhance" name="enhance" defaultChecked={defaultAdvancedSettings.enhance} />
                           </div>
                           <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="nologo" className="flex flex-col space-y-1">
                               <span>No Logo</span>
                               <span className="font-normal leading-snug text-muted-foreground text-xs">Disable the Pollinations logo overlay.</span>
                             </Label>
-                            <Switch id="nologo" name="nologo" />
+                            <Switch id="nologo" name="nologo" defaultChecked={defaultAdvancedSettings.nologo} />
                           </div>
                            <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="private" className="flex flex-col space-y-1">
                               <span>Private</span>
                               <span className="font-normal leading-snug text-muted-foreground text-xs">Prevent image from appearing in public feed.</span>
                             </Label>
-                            <Switch id="private" name="private" />
+                            <Switch id="private" name="private" defaultChecked={defaultAdvancedSettings.private} />
                           </div>
                           <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="safe" className="flex flex-col space-y-1">
                               <span>Safe Mode</span>
                               <span className="font-normal leading-snug text-muted-foreground text-xs">Strict NSFW filtering (throws error if detected).</span>
                             </Label>
-                            <Switch id="safe" name="safe" />
+                            <Switch id="safe" name="safe" defaultChecked={defaultAdvancedSettings.safe} />
                           </div>
                         </AccordionContent>
                       </AccordionItem>
@@ -330,7 +371,12 @@ export default function ImageGenerator() {
                       <CardTitle>Result</CardTitle>
                       <CardDescription>Your generated image will appear here.</CardDescription>
                   </div>
-                  {imageUrl && <Button variant="outline" size="sm" onClick={() => handleDownload(imageUrl)}><Download className="mr-2 h-4 w-4" /> Download</Button>}
+                  {imageUrl && (
+                    <div className="flex items-center gap-2">
+                      <Button variant="outline" size="sm" onClick={handleCopyPrompt}><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDownload(imageUrl)}><Download className="mr-2 h-4 w-4" /> Download</Button>
+                    </div>
+                  )}
               </CardHeader>
               <CardContent>
                 <div className="aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center bg-card-foreground/5 overflow-hidden">
