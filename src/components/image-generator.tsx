@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect, useState, useActionState, useRef } from 'react';
@@ -73,6 +74,8 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 function ResultPanel({ actionState }: { actionState: ActionState }) {
   const { pending } = useFormStatus();
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const { toast } = useToast();
+
 
   useEffect(() => {
     if (actionState.imageUrl) {
@@ -103,6 +106,10 @@ function ResultPanel({ actionState }: { actionState: ActionState }) {
   const handleCopyPrompt = () => {
     if (actionState.prompt) {
       navigator.clipboard.writeText(actionState.prompt);
+      toast({
+        title: 'Prompt Copied!',
+        description: 'The prompt has been copied to your clipboard.',
+      });
     }
   };
 
@@ -228,6 +235,14 @@ export default function ImageGenerator() {
         variant: 'destructive',
       });
     }
+  };
+
+  const handleCopyHistoryPrompt = (prompt: string) => {
+    navigator.clipboard.writeText(prompt);
+    toast({
+      title: 'Prompt Copied!',
+      description: 'The prompt has been copied to your clipboard.',
+    });
   };
 
   const handleClearHistory = () => {
@@ -405,9 +420,14 @@ export default function ImageGenerator() {
                                   <Image src={item.imageUrl} alt={item.prompt} layout="fill" className="object-contain" data-ai-hint="gallery photo" />
                                   <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
                                     <p className="text-xs text-primary-foreground line-clamp-4 mb-2">{item.prompt}</p>
-                                    <Button variant="secondary" size="sm" className="h-8" onClick={() => handleDownload(item.imageUrl)}>
-                                      <Download className="mr-2 h-4 w-4" /> Download
-                                    </Button>
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                      <Button variant="secondary" size="sm" className="h-8" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
+                                        <Copy className="mr-2 h-4 w-4" /> Copy
+                                      </Button>
+                                      <Button variant="secondary" size="sm" className="h-8" onClick={() => handleDownload(item.imageUrl)}>
+                                        <Download className="mr-2 h-4 w-4" /> Download
+                                      </Button>
+                                    </div>
                                   </div>
                                 </div>
                               </Card>
