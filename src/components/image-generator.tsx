@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useEffect, useState, useActionState, useRef, useTransition } from 'react';
@@ -72,15 +73,8 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 }
 
 function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, isGenerating: boolean }) {
-  const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { toast } = useToast();
-
-  useEffect(() => {
-    if (actionState.imageUrl) {
-      const newImageUrl = actionState.imageUrl.startsWith('data:') ? actionState.imageUrl : `${actionState.imageUrl}&t=${new Date().getTime()}`;
-      setImageUrl(newImageUrl);
-    }
-  }, [actionState.imageUrl]);
+  const imageUrl = actionState.imageUrl ? (actionState.imageUrl.startsWith('data:') ? actionState.imageUrl : `${actionState.imageUrl}&t=${new Date().getTime()}`) : null;
 
   const handleDownload = async (url: string) => {
     if (!url) return;
@@ -501,5 +495,3 @@ export default function ImageGenerator() {
     </div>
   );
 }
-
-    
