@@ -70,17 +70,16 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ResultPanel() {
+function ResultPanel({ actionState }: { actionState: ActionState }) {
   const { pending } = useFormStatus();
-  const [state, _] = useActionState(generateImageAction, { imageUrl: null, error: null, prompt: null });
   const [imageUrl, setImageUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    if (state.imageUrl) {
-      const newImageUrl = state.imageUrl.startsWith('data:') ? state.imageUrl : `${state.imageUrl}&t=${new Date().getTime()}`;
+    if (actionState.imageUrl) {
+      const newImageUrl = actionState.imageUrl.startsWith('data:') ? actionState.imageUrl : `${actionState.imageUrl}&t=${new Date().getTime()}`;
       setImageUrl(newImageUrl);
     }
-  }, [state.imageUrl]);
+  }, [actionState.imageUrl]);
 
   const handleDownload = async (url: string) => {
     if (!url) return;
@@ -102,8 +101,8 @@ function ResultPanel() {
   };
 
   const handleCopyPrompt = () => {
-    if (state.prompt) {
-      navigator.clipboard.writeText(state.prompt);
+    if (actionState.prompt) {
+      navigator.clipboard.writeText(actionState.prompt);
     }
   };
 
@@ -139,7 +138,7 @@ function ResultPanel() {
               </p>
             </div>
           ) : imageUrl ? (
-            <Image src={imageUrl} alt={state.prompt || "Generated image"} width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
+            <Image src={imageUrl} alt={actionState.prompt || "Generated image"} width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
           ) : (
             <div className="flex flex-col items-center gap-2 text-muted-foreground">
               <ImageIcon className="h-10 w-10" />
@@ -249,13 +248,6 @@ export default function ImageGenerator() {
     }
   };
 
-  const handleCopyPrompt = () => {
-    if (state.prompt) {
-      navigator.clipboard.writeText(state.prompt);
-      toast({ title: 'Prompt Copied!', description: 'The prompt has been copied to your clipboard.' });
-    }
-  };
-
   const handleResetAdvanced = () => {
     setAdvancedSettings(defaultAdvancedSettings);
     toast({ title: 'Advanced settings reset' });
@@ -264,7 +256,7 @@ export default function ImageGenerator() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <form ref={formRef} action={dispatch} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className={cn("lg:col-span-1", activeTab === 'history' && 'lg:col-span-3')}>
           <Card>
             <CardHeader>
@@ -278,7 +270,7 @@ export default function ImageGenerator() {
                   <TabsTrigger value="history">History</TabsTrigger>
                 </TabsList>
                 <TabsContent value="text-to-image" className="mt-4">
-                  <form ref={formRef} action={dispatch} className="space-y-4">
+                  <div className="space-y-4">
                     <input type="hidden" name="mode" value="text-to-image" />
                     <input type="hidden" name="width" value={layouts[selectedLayout].width} />
                     <input type="hidden" name="height" value={layouts[selectedLayout].height} />
@@ -374,7 +366,7 @@ export default function ImageGenerator() {
                     </Accordion>
 
                     <SubmitButton>Generate</SubmitButton>
-                  </form>
+                  </div>
                 </TabsContent>
                 <TabsContent value="history" className="mt-4">
                   <div className="space-y-4">
@@ -431,10 +423,10 @@ export default function ImageGenerator() {
         </div>
         {activeTab === 'text-to-image' && (
           <div className="lg:col-span-2">
-            <ResultPanel />
+            <ResultPanel actionState={state} />
           </div>
         )}
-      </div>
+      </form>
     </div>
   );
 }
