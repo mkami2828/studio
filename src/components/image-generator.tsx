@@ -335,9 +335,19 @@ export default function ImageGenerator() {
               <CardContent>
                 <div className="aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center bg-card-foreground/5 overflow-hidden">
                   {useFormStatus().pending ? (
-                    <div className="flex flex-col items-center gap-2 text-muted-foreground">
-                      <LoaderCircle className="h-10 w-10 animate-spin" />
-                      <p>Generating your masterpiece...</p>
+                    <div className="flex flex-col items-center justify-center gap-4 text-foreground p-8">
+                      <div className="relative h-24 w-24">
+                          <div className="absolute inset-0 bg-primary/30 rounded-full animate-ping"></div>
+                          <div className="relative flex items-center justify-center h-full w-full bg-primary/50 rounded-full">
+                              <Sparkles className="h-12 w-12 text-primary-foreground animate-pulse" />
+                          </div>
+                      </div>
+                      <p className="text-lg font-semibold tracking-wider">
+                          Conjuring creativity...
+                      </p>
+                      <p className="text-sm text-muted-foreground">
+                          Please wait while the AI works its magic.
+                      </p>
                     </div>
                   ) : imageUrl ? (
                     <Image src={imageUrl} alt={state.prompt || "Generated image"} width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
