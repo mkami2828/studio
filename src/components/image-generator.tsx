@@ -80,6 +80,9 @@ export default function ImageGenerator() {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedLayout, setSelectedLayout] = useState<LayoutKey>('default');
+  
+  // State for advanced settings
+  const [advancedSettings, setAdvancedSettings] = useState(defaultAdvancedSettings);
 
   useEffect(() => {
     try {
@@ -174,25 +177,8 @@ export default function ImageGenerator() {
   };
 
   const handleResetAdvanced = () => {
-    if (formRef.current) {
-        const form = formRef.current;
-        const modelSelect = form.elements.namedItem('model-select') as HTMLSelectElement | null;
-        if(modelSelect) modelSelect.value = defaultAdvancedSettings.model;
-        
-        const enhanceSwitch = form.elements.namedItem('enhance') as HTMLInputElement | null;
-        if(enhanceSwitch) enhanceSwitch.checked = defaultAdvancedSettings.enhance;
-
-        const nologoSwitch = form.elements.namedItem('nologo') as HTMLInputElement | null;
-        if(nologoSwitch) nologoSwitch.checked = defaultAdvancedSettings.nologo;
-
-        const privateSwitch = form.elements.namedItem('private') as HTMLInputElement | null;
-        if(privateSwitch) privateSwitch.checked = defaultAdvancedSettings.private;
-
-        const safeSwitch = form.elements.namedItem('safe') as HTMLInputElement | null;
-        if(safeSwitch) safeSwitch.checked = defaultAdvancedSettings.safe;
-
-        toast({ title: 'Advanced settings reset' });
-    }
+    setAdvancedSettings(defaultAdvancedSettings);
+    toast({ title: 'Advanced settings reset' });
   };
 
 
@@ -264,7 +250,7 @@ export default function ImageGenerator() {
                           </div>
                           <div className="space-y-2">
                             <Label htmlFor="model-select">Model</Label>
-                            <Select name="model" defaultValue={defaultAdvancedSettings.model} >
+                            <Select name="model" value={advancedSettings.model} onValueChange={(value) => setAdvancedSettings(s => ({...s, model: value}))}>
                               <SelectTrigger id="model-select">
                                 <SelectValue placeholder="Select a model" />
                               </SelectTrigger>
@@ -280,28 +266,28 @@ export default function ImageGenerator() {
                               <span>Enhance Prompt</span>
                               <span className="font-normal leading-snug text-muted-foreground text-xs">Let an LLM enhance your prompt for more detail.</span>
                             </Label>
-                            <Switch id="enhance" name="enhance" defaultChecked={defaultAdvancedSettings.enhance} />
+                            <Switch id="enhance" name="enhance" checked={advancedSettings.enhance} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, enhance: checked}))} />
                           </div>
                           <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="nologo" className="flex flex-col space-y-1">
                               <span>No Logo</span>
                               <span className="font-normal leading-snug text-muted-foreground text-xs">Disable the Pollinations logo overlay.</span>
                             </Label>
-                            <Switch id="nologo" name="nologo" defaultChecked={defaultAdvancedSettings.nologo} />
+                            <Switch id="nologo" name="nologo" checked={advancedSettings.nologo} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, nologo: checked}))} />
                           </div>
                            <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="private" className="flex flex-col space-y-1">
                               <span>Private</span>
                               <span className="font-normal leading-snug text-muted-foreground text-xs">Prevent image from appearing in public feed.</span>
                             </Label>
-                            <Switch id="private" name="private" defaultChecked={defaultAdvancedSettings.private} />
+                            <Switch id="private" name="private" checked={advancedSettings.private} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, private: checked}))} />
                           </div>
                           <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="safe" className="flex flex-col space-y-1">
                               <span>Safe Mode</span>
                               <span className="font-normal leading-snug text-muted-foreground text-xs">Strict NSFW filtering (throws error if detected).</span>
                             </Label>
-                            <Switch id="safe" name="safe" defaultChecked={defaultAdvancedSettings.safe} />
+                            <Switch id="safe" name="safe" checked={advancedSettings.safe} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, safe: checked}))} />
                           </div>
                         </AccordionContent>
                       </AccordionItem>
