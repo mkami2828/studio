@@ -2,7 +2,7 @@
 
 'use client';
 
-import { useEffect, useState, useActionState, useRef, useTransition } from 'react';
+import { useEffect, useState, useActionState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
 import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings, Trash2, Dices, Copy, RotateCcw } from 'lucide-react';
@@ -114,8 +114,8 @@ function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, 
           </div>
           {imageUrl && !isGenerating && (
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={handleCopyPrompt}><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
-              <Button variant="outline" size="sm" onClick={() => handleDownload(imageUrl)}><Download className="mr-2 h-4 w-4" /> Download</Button>
+              <Button type="button" variant="outline" size="sm" onClick={handleCopyPrompt}><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
+              <Button type="button" variant="outline" size="sm" onClick={() => handleDownload(imageUrl)}><Download className="mr-2 h-4 w-4" /> Download</Button>
             </div>
           )}
       </CardHeader>
@@ -276,7 +276,8 @@ export default function ImageGenerator() {
       try {
         localStorage.setItem('arty-ai-history', JSON.stringify(updatedHistory));
         toast({ title: 'Image Deleted', description: 'The image has been removed from your history.' });
-      } catch (error) {
+      } catch (error)
+      {
         console.error("Failed to update history in localStorage", error);
         toast({ title: 'Error', description: 'Could not delete the image from history.', variant: 'destructive' });
       }
@@ -416,7 +417,7 @@ export default function ImageGenerator() {
                       {history.length > 0 && (
                          <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Clear All</Button>
+                            <Button type="button" variant="outline" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Clear All</Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
@@ -447,15 +448,15 @@ export default function ImageGenerator() {
                                   <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center space-y-2">
                                     <p className="text-xs text-primary-foreground line-clamp-3 mb-2">{item.prompt}</p>
                                     <div className="flex flex-wrap items-center justify-center gap-2">
-                                      <Button variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
+                                      <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
                                         <Copy className="mr-1 h-3 w-3" /> Copy
                                       </Button>
-                                      <Button variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleDownload(item.imageUrl)}>
+                                      <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleDownload(item.imageUrl)}>
                                         <Download className="mr-1 h-3 w-3" /> Download
                                       </Button>
                                       <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                          <Button variant="destructive" size="sm" className="h-7 px-2 text-xs">
+                                          <Button type="button" variant="destructive" size="sm" className="h-7 px-2 text-xs">
                                             <Trash2 className="mr-1 h-3 w-3" /> Delete
                                           </Button>
                                         </AlertDialogTrigger>
