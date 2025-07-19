@@ -49,6 +49,8 @@ const layouts = {
 
 type LayoutKey = keyof typeof layouts;
 
+const models = ["flux", "kontext", "turbo", "gptimage"];
+
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
   const { pending } = useFormStatus();
@@ -221,7 +223,16 @@ export default function ImageGenerator() {
                         <AccordionContent className="space-y-4 pt-4">
                           <div className="space-y-2">
                             <Label htmlFor="model">Model</Label>
-                            <Input id="model" name="model" type="text" placeholder="flux" />
+                            <Select name="model" defaultValue="flux">
+                              <SelectTrigger id="model">
+                                <SelectValue placeholder="Select a model" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {models.map((model) => (
+                                  <SelectItem key={model} value={model}>{model}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
                           <div className="flex items-center justify-between rounded-lg border p-3">
                             <Label htmlFor="enhance" className="flex flex-col space-y-1">
