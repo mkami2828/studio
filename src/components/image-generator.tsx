@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import samplePrompts from '@/lib/prompts.json';
 import { cn } from '@/lib/utils';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 type HistoryItem = {
   id: string;
@@ -36,6 +37,18 @@ type HistoryItem = {
   imageUrl: string;
   timestamp: number;
 };
+
+const layouts = {
+  'square': { width: 1080, height: 1080, name: 'Instagram Post (Square)' },
+  'portrait': { width: 1080, height: 1350, name: 'Instagram Post (Portrait)' },
+  'reel': { width: 1080, height: 1920, name: 'Instagram Reel/Story' },
+  'fb_cover': { width: 851, height: 315, name: 'Facebook Cover' },
+  'yt_thumbnail': { width: 1280, height: 720, name: 'YouTube Thumbnail' },
+  'default': { width: 1024, height: 1024, name: 'Default (1024x1024)' },
+};
+
+type LayoutKey = keyof typeof layouts;
+
 
 function SubmitButton({ children }: { children: React.ReactNode }) {
   const { pending } = useFormStatus();
@@ -56,6 +69,7 @@ export default function ImageGenerator() {
   const [activeTab, setActiveTab] = useState('text-to-image');
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [selectedLayout, setSelectedLayout] = useState<LayoutKey>('default');
 
   useEffect(() => {
     try {
@@ -163,6 +177,9 @@ export default function ImageGenerator() {
                 <TabsContent value="text-to-image" className="mt-4">
                   <form ref={formRef} action={dispatch} className="space-y-4">
                     <input type="hidden" name="mode" value="text-to-image" />
+                    <input type="hidden" name="width" value={layouts[selectedLayout].width} />
+                    <input type="hidden" name="height" value={layouts[selectedLayout].height} />
+
                     <div className="space-y-2">
                        <div className="flex justify-between items-center">
                         <Label htmlFor="prompt-text">Prompt</Label>
@@ -173,19 +190,24 @@ export default function ImageGenerator() {
                       </div>
                       <Textarea id="prompt-text" name="prompt" ref={promptRef} placeholder="e.g., A beautiful sunset over the ocean" required />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="width">Width</Label>
-                        <Input id="width" name="width" type="number" placeholder="1024" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="height">Height</Label>
-                        <Input id="height" name="height" type="number" placeholder="1024" />
-                      </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="layout">Layout</Label>
+                        <Select onValueChange={(value: LayoutKey) => setSelectedLayout(value)} defaultValue={selectedLayout}>
+                          <SelectTrigger id="layout">
+                            <SelectValue placeholder="Select a layout" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {Object.entries(layouts).map(([key, { name, width, height }]) => (
+                                <SelectItem key={key} value={key}>{name} ({width}x{height})</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                     </div>
+                   
                     <div className="space-y-2">
                       <Label htmlFor="seed">Seed</Label>
-                      <Input id="seed" name="seed" type="number" placeholder="42" />
+                      <Input id="seed" name="seed" type="number" placeholder="A random seed will be used" />
                     </div>
                     
                     <Accordion type="single" collapsible>
