@@ -160,13 +160,13 @@ function ResultPanel({ actionState }: { actionState: ActionState }) {
 
 export default function ImageGenerator() {
   const formRef = useRef<HTMLFormElement>(null);
-  const promptRef = useRef<HTMLTextAreaElement>(null);
   const initialState: ActionState = { imageUrl: null, error: null, prompt: null };
   const [state, dispatch] = useActionState(generateImageAction, initialState);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-image');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedLayout, setSelectedLayout] = useState<LayoutKey>('default');
+  const [prompt, setPrompt] = useState(state.prompt ?? '');
   
   // State for advanced settings
   const [advancedSettings, setAdvancedSettings] = useState(defaultAdvancedSettings);
@@ -192,6 +192,8 @@ export default function ImageGenerator() {
     }
     if (state.imageUrl && state.prompt) {
       const newImageUrl = state.imageUrl.startsWith('data:') ? state.imageUrl : `${state.imageUrl}&t=${new Date().getTime()}`;
+
+      setPrompt(state.prompt);
 
       const newItem: HistoryItem = {
         id: `arty-ai-${Date.now()}`,
@@ -270,11 +272,8 @@ export default function ImageGenerator() {
   };
 
   const handleRandomPrompt = () => {
-    if (promptRef.current) {
-      const randomPrompt = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
-      promptRef.current.value = randomPrompt;
-      promptRef.current.dispatchEvent(new Event('input', { bubbles: true }));
-    }
+    const randomPrompt = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
+    setPrompt(randomPrompt);
   };
 
   const handleResetAdvanced = () => {
@@ -312,7 +311,7 @@ export default function ImageGenerator() {
                           Random
                         </Button>
                       </div>
-                      <Textarea id="prompt-text" name="prompt" ref={promptRef} placeholder="e.g., A beautiful sunset over the ocean" required defaultValue={state.prompt ?? ''} />
+                      <Textarea id="prompt-text" name="prompt" placeholder="e.g., A beautiful sunset over the ocean" required value={prompt} onChange={(e) => setPrompt(e.target.value)} />
                     </div>
 
                     <div className="space-y-2">
