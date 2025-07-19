@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useActionState, useRef } from 'react';
+import { useEffect, useState, useActionState, useRef, useTransition } from 'react';
 import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
 import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings, Trash2, Dices, Copy, RotateCcw } from 'lucide-react';
@@ -71,11 +71,9 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
   );
 }
 
-function ResultPanel({ actionState }: { actionState: ActionState }) {
-  const { pending } = useFormStatus();
+function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, isGenerating: boolean }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const { toast } = useToast();
-
 
   useEffect(() => {
     if (actionState.imageUrl) {
@@ -120,7 +118,7 @@ function ResultPanel({ actionState }: { actionState: ActionState }) {
               <CardTitle>Result</CardTitle>
               <CardDescription>Your generated image will appear here.</CardDescription>
           </div>
-          {imageUrl && !pending && (
+          {imageUrl && !isGenerating && (
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handleCopyPrompt}><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
               <Button variant="outline" size="sm" onClick={() => handleDownload(imageUrl)}><Download className="mr-2 h-4 w-4" /> Download</Button>
@@ -129,7 +127,7 @@ function ResultPanel({ actionState }: { actionState: ActionState }) {
       </CardHeader>
       <CardContent>
         <div className="aspect-square w-full rounded-lg border-2 border-dashed flex items-center justify-center bg-card-foreground/5 overflow-hidden">
-          {pending ? (
+          {isGenerating ? (
             <div className="flex flex-col items-center justify-center gap-4 text-foreground p-8">
               <div className="relative h-24 w-24">
                   <div className="absolute inset-0 bg-primary/30 rounded-full animate-ping"></div>
@@ -167,9 +165,29 @@ export default function ImageGenerator() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedLayout, setSelectedLayout] = useState<LayoutKey>('default');
   const [prompt, setPrompt] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   
   // State for advanced settings
   const [advancedSettings, setAdvancedSettings] = useState(defaultAdvancedSettings);
+
+  const formAction = async (formData: FormData) => {
+    const startTime = Date.now();
+    setIsGenerating(true);
+    
+    await dispatch(formData);
+
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    const minDuration = 2000;
+
+    if (duration < minDuration) {
+        setTimeout(() => {
+            setIsGenerating(false);
+        }, minDuration - duration);
+    } else {
+        setIsGenerating(false);
+    }
+  };
 
   useEffect(() => {
     try {
@@ -285,7 +303,7 @@ export default function ImageGenerator() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <form ref={formRef} action={dispatch} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <form ref={formRef} action={formAction} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className={cn("lg:col-span-1", activeTab === 'history' && 'lg:col-span-3')}>
           <Card>
             <CardHeader>
@@ -476,10 +494,12 @@ export default function ImageGenerator() {
         </div>
         {activeTab === 'text-to-image' && (
           <div className="lg:col-span-2">
-            <ResultPanel actionState={state} />
+            <ResultPanel actionState={state} isGenerating={isGenerating} />
           </div>
         )}
       </form>
     </div>
   );
 }
+
+    
