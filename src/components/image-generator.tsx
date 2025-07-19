@@ -195,6 +195,8 @@ export default function ImageGenerator() {
   }, []);
 
   useEffect(() => {
+    if (!state) return;
+
     if (state.error) {
       toast({
         title: 'Generation Error',
@@ -202,10 +204,10 @@ export default function ImageGenerator() {
         variant: 'destructive',
       });
     }
+
     if (state.imageUrl && state.prompt) {
       const newImageUrl = state.imageUrl.startsWith('data:') ? state.imageUrl : `${state.imageUrl}&t=${new Date().getTime()}`;
 
-      // Keep the prompt in the input field
       setPrompt(state.prompt);
 
       const newItem: HistoryItem = {
@@ -215,17 +217,16 @@ export default function ImageGenerator() {
         timestamp: Date.now(),
       };
 
-      setHistory(prevHistory => {
-        const updatedHistory = [newItem, ...prevHistory];
-        try {
-          localStorage.setItem('arty-ai-history', JSON.stringify(updatedHistory));
-        } catch (error) {
-          console.error("Failed to save history to localStorage", error);
-        }
-        return updatedHistory;
-      });
+      const updatedHistory = [newItem, ...history];
+      setHistory(updatedHistory);
+      try {
+        localStorage.setItem('arty-ai-history', JSON.stringify(updatedHistory));
+      } catch (error) {
+        console.error("Failed to save history to localStorage", error);
+      }
     }
-  }, [state, toast]);
+  }, [state]);
+
   
   const handleDownload = async (url: string) => {
     if (!url) return;
