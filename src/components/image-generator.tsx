@@ -255,6 +255,20 @@ export default function ImageGenerator() {
     }
   };
 
+  const handleDeleteHistoryItem = (idToDelete: string) => {
+    setHistory(prevHistory => {
+      const updatedHistory = prevHistory.filter(item => item.id !== idToDelete);
+      try {
+        localStorage.setItem('arty-ai-history', JSON.stringify(updatedHistory));
+        toast({ title: 'Image Deleted', description: 'The image has been removed from your history.' });
+      } catch (error) {
+        console.error("Failed to update history in localStorage", error);
+        toast({ title: 'Error', description: 'Could not delete the image from history.', variant: 'destructive' });
+      }
+      return updatedHistory;
+    });
+  };
+
   const handleRandomPrompt = () => {
     if (promptRef.current) {
       const randomPrompt = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
@@ -390,7 +404,7 @@ export default function ImageGenerator() {
                       {history.length > 0 && (
                          <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="outline" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Clear</Button>
+                            <Button variant="outline" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Clear All</Button>
                           </AlertDialogTrigger>
                           <AlertDialogContent>
                             <AlertDialogHeader>
@@ -418,15 +432,34 @@ export default function ImageGenerator() {
                               <Card key={item.id} className="overflow-hidden group">
                                 <div className="aspect-square w-full bg-card-foreground/5 relative">
                                   <Image src={item.imageUrl} alt={item.prompt} layout="fill" className="object-contain" data-ai-hint="gallery photo" />
-                                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center">
-                                    <p className="text-xs text-primary-foreground line-clamp-4 mb-2">{item.prompt}</p>
-                                    <div className="flex flex-col sm:flex-row gap-2">
-                                      <Button variant="secondary" size="sm" className="h-8" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
-                                        <Copy className="mr-2 h-4 w-4" /> Copy
+                                  <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center space-y-2">
+                                    <p className="text-xs text-primary-foreground line-clamp-3 mb-2">{item.prompt}</p>
+                                    <div className="flex flex-wrap items-center justify-center gap-2">
+                                      <Button variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
+                                        <Copy className="mr-1 h-3 w-3" /> Copy
                                       </Button>
-                                      <Button variant="secondary" size="sm" className="h-8" onClick={() => handleDownload(item.imageUrl)}>
-                                        <Download className="mr-2 h-4 w-4" /> Download
+                                      <Button variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleDownload(item.imageUrl)}>
+                                        <Download className="mr-1 h-3 w-3" /> Download
                                       </Button>
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="destructive" size="sm" className="h-7 px-2 text-xs">
+                                            <Trash2 className="mr-1 h-3 w-3" /> Delete
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete Image?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              This will permanently delete this image from your history. This action cannot be undone.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDeleteHistoryItem(item.id)}>Delete</AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
                                     </div>
                                   </div>
                                 </div>
