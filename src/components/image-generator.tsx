@@ -166,7 +166,7 @@ export default function ImageGenerator() {
   const [activeTab, setActiveTab] = useState('text-to-image');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedLayout, setSelectedLayout] = useState<LayoutKey>('default');
-  const [prompt, setPrompt] = useState(state.prompt ?? '');
+  const [prompt, setPrompt] = useState('');
   
   // State for advanced settings
   const [advancedSettings, setAdvancedSettings] = useState(defaultAdvancedSettings);
@@ -193,6 +193,7 @@ export default function ImageGenerator() {
     if (state.imageUrl && state.prompt) {
       const newImageUrl = state.imageUrl.startsWith('data:') ? state.imageUrl : `${state.imageUrl}&t=${new Date().getTime()}`;
 
+      // Keep the prompt in the input field
       setPrompt(state.prompt);
 
       const newItem: HistoryItem = {
