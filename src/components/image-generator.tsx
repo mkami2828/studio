@@ -75,7 +75,6 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, isGenerating: boolean }) {
   const { toast } = useToast();
   
-  // Always append nologo and private to the download URL to ensure direct download
   const downloadUrl = actionState.imageUrl ? `${actionState.imageUrl}&nologo=true&private=true&t=${new Date().getTime()}` : null;
   const displayUrl = actionState.imageUrl ? `${actionState.imageUrl}&t=${new Date().getTime()}` : null;
 
@@ -204,17 +203,16 @@ export default function ImageGenerator() {
         timestamp: Date.now(),
       };
 
-      setHistory(prevHistory => {
-        const updatedHistory = [newItem, ...prevHistory];
-        try {
-          localStorage.setItem('arty-ai-history', JSON.stringify(updatedHistory));
-        } catch (error) {
-          console.error("Failed to save history to localStorage", error);
-        }
-        return updatedHistory;
-      });
+      const newHistory = [newItem, ...history];
+      setHistory(newHistory);
+      try {
+        localStorage.setItem('arty-ai-history', JSON.stringify(newHistory));
+      } catch (error) {
+        console.error("Failed to save history to localStorage", error);
+      }
     }
-  }, [state, toast]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state]);
 
   
   const handleCopyHistoryPrompt = (prompt: string) => {
@@ -467,3 +465,5 @@ export default function ImageGenerator() {
     </div>
   );
 }
+
+    
