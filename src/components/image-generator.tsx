@@ -76,25 +76,6 @@ function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, 
   const { toast } = useToast();
   const imageUrl = actionState.imageUrl ? (actionState.imageUrl.startsWith('data:') ? actionState.imageUrl : `${actionState.imageUrl}&t=${new Date().getTime()}`) : null;
 
-  const handleDownload = async (url: string) => {
-    if (!url) return;
-    try {
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      const fileExtension = blob.type.split('/')[1] || 'png';
-      a.download = `arty-ai-${Date.now()}.${fileExtension}`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error('Download failed:', error);
-    }
-  };
-
   const handleCopyPrompt = () => {
     if (actionState.prompt) {
       navigator.clipboard.writeText(actionState.prompt);
@@ -115,7 +96,11 @@ function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, 
           {imageUrl && !isGenerating && (
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" size="sm" onClick={handleCopyPrompt}><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
-              <Button type="button" variant="outline" size="sm" onClick={() => handleDownload(imageUrl)}><Download className="mr-2 h-4 w-4" /> Download</Button>
+              <Button asChild variant="outline" size="sm">
+                <a href={imageUrl} download={`arty-ai-${Date.now()}.png`}>
+                  <Download className="mr-2 h-4 w-4" /> Download
+                </a>
+              </Button>
             </div>
           )}
       </CardHeader>
@@ -153,7 +138,7 @@ function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, 
 export default function ImageGenerator() {
   const formRef = useRef<HTMLFormElement>(null);
   const initialState: ActionState = { imageUrl: null, error: null, prompt: null };
-  const [state, dispatch] = useActionState(generateImageAction, initialState);
+  const [state, formAction] = useActionState(generateImageAction, initialState);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-image');
   const [history, setHistory] = useState<HistoryItem[]>([]);
@@ -163,16 +148,16 @@ export default function ImageGenerator() {
   
   // State for advanced settings
   const [advancedSettings, setAdvancedSettings] = useState(defaultAdvancedSettings);
-
-  const formAction = async (formData: FormData) => {
-    const startTime = Date.now();
+  
+  const wrappedFormAction = async (formData: FormData) => {
     setIsGenerating(true);
+    const startTime = Date.now();
     
-    await dispatch(formData);
+    await formAction(formData);
 
     const endTime = Date.now();
     const duration = endTime - startTime;
-    const minDuration = 3000;
+    const minDuration = 2000;
 
     if (duration < minDuration) {
         setTimeout(() => {
@@ -217,42 +202,19 @@ export default function ImageGenerator() {
         timestamp: Date.now(),
       };
 
-      const updatedHistory = [newItem, ...history];
-      setHistory(updatedHistory);
-      try {
-        localStorage.setItem('arty-ai-history', JSON.stringify(updatedHistory));
-      } catch (error) {
-        console.error("Failed to save history to localStorage", error);
-      }
-    }
-  }, [state]);
-
-  
-  const handleDownload = async (url: string) => {
-    if (!url) return;
-    try {
-      toast({ title: 'Starting download...', description: 'Your image will be downloaded shortly.' });
-      const response = await fetch(url);
-      const blob = await response.blob();
-      const blobUrl = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      const fileExtension = blob.type.split('/')[1] || 'png';
-      a.download = `arty-ai-${Date.now()}.${fileExtension}`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error('Download failed:', error);
-      toast({
-        title: 'Download Failed',
-        description: 'Could not download the image.',
-        variant: 'destructive',
+      setHistory(prevHistory => {
+        const updatedHistory = [newItem, ...prevHistory];
+        try {
+          localStorage.setItem('arty-ai-history', JSON.stringify(updatedHistory));
+        } catch (error) {
+          console.error("Failed to save history to localStorage", error);
+        }
+        return updatedHistory;
       });
     }
-  };
+  }, [state, toast]);
 
+  
   const handleCopyHistoryPrompt = (prompt: string) => {
     navigator.clipboard.writeText(prompt);
     toast({
@@ -299,7 +261,7 @@ export default function ImageGenerator() {
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <form ref={formRef} action={formAction} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <form ref={formRef} action={wrappedFormAction} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className={cn("lg:col-span-1", activeTab === 'history' && 'lg:col-span-3')}>
           <Card>
             <CardHeader>
@@ -452,8 +414,10 @@ export default function ImageGenerator() {
                                       <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
                                         <Copy className="mr-1 h-3 w-3" /> Copy
                                       </Button>
-                                      <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleDownload(item.imageUrl)}>
-                                        <Download className="mr-1 h-3 w-3" /> Download
+                                      <Button asChild variant="secondary" size="sm" className="h-7 px-2 text-xs">
+                                        <a href={item.imageUrl} download={`arty-ai-${item.id}.png`}>
+                                          <Download className="mr-1 h-3 w-3" /> Download
+                                        </a>
                                       </Button>
                                       <AlertDialog>
                                         <AlertDialogTrigger asChild>
