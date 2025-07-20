@@ -74,7 +74,11 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 
 function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, isGenerating: boolean }) {
   const { toast } = useToast();
-  const imageUrl = actionState.imageUrl ? (actionState.imageUrl.startsWith('data:') ? actionState.imageUrl : `${actionState.imageUrl}&t=${new Date().getTime()}`) : null;
+  
+  // Always append nologo and private to the download URL to ensure direct download
+  const downloadUrl = actionState.imageUrl ? `${actionState.imageUrl}&nologo=true&private=true&t=${new Date().getTime()}` : null;
+  const displayUrl = actionState.imageUrl ? `${actionState.imageUrl}&t=${new Date().getTime()}` : null;
+
 
   const handleCopyPrompt = () => {
     if (actionState.prompt) {
@@ -93,11 +97,11 @@ function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, 
               <CardTitle>Result</CardTitle>
               <CardDescription>Your generated image will appear here.</CardDescription>
           </div>
-          {imageUrl && !isGenerating && (
+          {displayUrl && !isGenerating && (
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" size="sm" onClick={handleCopyPrompt}><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
               <Button asChild variant="outline" size="sm">
-                <a href={imageUrl} download={`arty-ai-${Date.now()}.png`}>
+                <a href={downloadUrl!} download={`arty-ai-${Date.now()}.png`}>
                   <Download className="mr-2 h-4 w-4" /> Download
                 </a>
               </Button>
@@ -121,8 +125,8 @@ function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, 
                   Please wait while the AI works its magic.
               </p>
             </div>
-          ) : imageUrl ? (
-            <Image src={imageUrl} alt={actionState.prompt || "Generated image"} width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
+          ) : displayUrl ? (
+            <Image src={displayUrl} alt={actionState.prompt || "Generated image"} width={1024} height={1024} className="w-full h-full object-contain" data-ai-hint="abstract art" />
           ) : (
             <div className="flex flex-col items-center gap-2 text-muted-foreground">
               <ImageIcon className="h-10 w-10" />
@@ -191,14 +195,12 @@ export default function ImageGenerator() {
     }
 
     if (state.imageUrl && state.prompt) {
-      const newImageUrl = state.imageUrl.startsWith('data:') ? state.imageUrl : `${state.imageUrl}&t=${new Date().getTime()}`;
-
       setPrompt(state.prompt);
 
       const newItem: HistoryItem = {
         id: `arty-ai-${Date.now()}`,
         prompt: state.prompt,
-        imageUrl: newImageUrl,
+        imageUrl: state.imageUrl,
         timestamp: Date.now(),
       };
 
@@ -404,45 +406,49 @@ export default function ImageGenerator() {
                           </div>
                         ) : (
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-                            {history.map(item => (
-                              <Card key={item.id} className="overflow-hidden group">
-                                <div className="aspect-square w-full bg-card-foreground/5 relative">
-                                  <Image src={item.imageUrl} alt={item.prompt} layout="fill" className="object-contain" data-ai-hint="gallery photo" />
-                                  <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center space-y-2">
-                                    <p className="text-xs text-primary-foreground line-clamp-3 mb-2">{item.prompt}</p>
-                                    <div className="flex flex-wrap items-center justify-center gap-2">
-                                      <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
-                                        <Copy className="mr-1 h-3 w-3" /> Copy
-                                      </Button>
-                                      <Button asChild variant="secondary" size="sm" className="h-7 px-2 text-xs">
-                                        <a href={item.imageUrl} download={`arty-ai-${item.id}.png`}>
-                                          <Download className="mr-1 h-3 w-3" /> Download
-                                        </a>
-                                      </Button>
-                                      <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                          <Button type="button" variant="destructive" size="sm" className="h-7 px-2 text-xs">
-                                            <Trash2 className="mr-1 h-3 w-3" /> Delete
-                                          </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                          <AlertDialogHeader>
-                                            <AlertDialogTitle>Delete Image?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                              This will permanently delete this image from your history. This action cannot be undone.
-                                            </AlertDialogDescription>
-                                          </AlertDialogHeader>
-                                          <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteHistoryItem(item.id)}>Delete</AlertDialogAction>
-                                          </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                      </AlertDialog>
+                            {history.map(item => {
+                                const displayUrl = `${item.imageUrl}&t=${item.timestamp}`;
+                                const downloadUrl = `${item.imageUrl}&nologo=true&private=true&t=${item.timestamp}`;
+                                return (
+                                <Card key={item.id} className="overflow-hidden group">
+                                    <div className="aspect-square w-full bg-card-foreground/5 relative">
+                                    <Image src={displayUrl} alt={item.prompt} layout="fill" className="object-contain" data-ai-hint="gallery photo" />
+                                    <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center space-y-2">
+                                        <p className="text-xs text-primary-foreground line-clamp-3 mb-2">{item.prompt}</p>
+                                        <div className="flex flex-wrap items-center justify-center gap-2">
+                                        <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
+                                            <Copy className="mr-1 h-3 w-3" /> Copy
+                                        </Button>
+                                        <Button asChild variant="secondary" size="sm" className="h-7 px-2 text-xs">
+                                            <a href={downloadUrl} download={`arty-ai-${item.id}.png`}>
+                                            <Download className="mr-1 h-3 w-3" /> Download
+                                            </a>
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                            <Button type="button" variant="destructive" size="sm" className="h-7 px-2 text-xs">
+                                                <Trash2 className="mr-1 h-3 w-3" /> Delete
+                                            </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Delete Image?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                This will permanently delete this image from your history. This action cannot be undone.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteHistoryItem(item.id)}>Delete</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                        </div>
                                     </div>
-                                  </div>
-                                </div>
-                              </Card>
-                            ))}
+                                    </div>
+                                </Card>
+                                );
+                            })}
                           </div>
                         )}
                     </ScrollArea>
