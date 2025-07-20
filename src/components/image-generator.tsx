@@ -172,7 +172,7 @@ export default function ImageGenerator() {
 
     const endTime = Date.now();
     const duration = endTime - startTime;
-    const minDuration = 2000;
+    const minDuration = 3000;
 
     if (duration < minDuration) {
         setTimeout(() => {
