@@ -75,9 +75,7 @@ function SubmitButton({ children }: { children: React.ReactNode }) {
 function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, isGenerating: boolean }) {
   const { toast } = useToast();
   
-  const downloadUrl = actionState.imageUrl ? `${actionState.imageUrl}&nologo=true&private=true&t=${new Date().getTime()}` : null;
-  const displayUrl = actionState.imageUrl ? `${actionState.imageUrl}&t=${new Date().getTime()}` : null;
-
+  const displayUrl = actionState.imageUrl;
 
   const handleCopyPrompt = () => {
     if (actionState.prompt) {
@@ -100,7 +98,7 @@ function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, 
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" size="sm" onClick={handleCopyPrompt}><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
               <Button asChild variant="outline" size="sm">
-                <a href={downloadUrl!} download={`arty-ai-${Date.now()}.png`}>
+                <a href={displayUrl} download={`arty-ai-${Date.now()}.png`}>
                   <Download className="mr-2 h-4 w-4" /> Download
                 </a>
               </Button>
@@ -405,8 +403,8 @@ export default function ImageGenerator() {
                         ) : (
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                             {history.map(item => {
-                                const displayUrl = `${item.imageUrl}&t=${item.timestamp}`;
-                                const downloadUrl = `${item.imageUrl}&nologo=true&private=true&t=${item.timestamp}`;
+                                const displayUrl = item.imageUrl;
+                                const downloadUrl = item.imageUrl;
                                 return (
                                 <Card key={item.id} className="overflow-hidden group">
                                     <div className="aspect-square w-full bg-card-foreground/5 relative">
@@ -465,5 +463,3 @@ export default function ImageGenerator() {
     </div>
   );
 }
-
-    

@@ -4,6 +4,7 @@
 import { z } from 'zod';
 import { textToImage } from '@/ai/flows/text-to-image';
 import { generateImageFromImage } from '@/ai/flows/image-to-image';
+import { put } from '@vercel/blob';
 
 const FormSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required.'),
@@ -57,7 +58,19 @@ export async function generateImageAction(
       throw new Error('Image generation failed: No image URL was returned.');
     }
 
-    return { imageUrl: result.imageUrl, prompt: prompt };
+    // Fetch the image from the external URL
+    const imageResponse = await fetch(result.imageUrl);
+    if (!imageResponse.ok) {
+        throw new Error(`Failed to fetch the generated image. Status: ${imageResponse.status}`);
+    }
+    const imageBlob = await imageResponse.blob();
+
+    // Upload to Vercel Blob
+    const blob = await put(`images/arty-ai-${Date.now()}.png`, imageBlob, {
+        access: 'public',
+    });
+
+    return { imageUrl: blob.url, prompt: prompt };
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
     console.error('Generation Error:', errorMessage);
