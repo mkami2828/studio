@@ -98,7 +98,7 @@ function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, 
             <div className="flex items-center gap-2">
               <Button type="button" variant="outline" size="sm" onClick={handleCopyPrompt}><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
               <Button asChild variant="outline" size="sm">
-                <a href={displayUrl} download={`arty-ai-${Date.now()}.png`}>
+                <a href={`/api/download?url=${encodeURIComponent(displayUrl)}`}>
                   <Download className="mr-2 h-4 w-4" /> Download
                 </a>
               </Button>
@@ -404,7 +404,7 @@ export default function ImageGenerator() {
                           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                             {history.map(item => {
                                 const displayUrl = item.imageUrl;
-                                const downloadUrl = item.imageUrl;
+                                const downloadUrl = `/api/download?url=${encodeURIComponent(item.imageUrl)}`;
                                 return (
                                 <Card key={item.id} className="overflow-hidden group">
                                     <div className="aspect-square w-full bg-card-foreground/5 relative">
@@ -416,8 +416,8 @@ export default function ImageGenerator() {
                                             <Copy className="mr-1 h-3 w-3" /> Copy
                                         </Button>
                                         <Button asChild variant="secondary" size="sm" className="h-7 px-2 text-xs">
-                                            <a href={downloadUrl} download={`arty-ai-${item.id}.png`}>
-                                            <Download className="mr-1 h-3 w-3" /> Download
+                                            <a href={downloadUrl}>
+                                                <Download className="mr-1 h-3 w-3" /> Download
                                             </a>
                                         </Button>
                                         <AlertDialog>
