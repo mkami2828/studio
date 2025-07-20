@@ -68,6 +68,7 @@ export async function generateImageAction(
     // Upload to Vercel Blob
     const blob = await put(`images/arty-ai-${Date.now()}.png`, imageBlob, {
         access: 'public',
+        token: process.env.BLOB_READ_WRITE_TOKEN
     });
 
     return { imageUrl: blob.url, prompt: prompt };
