@@ -76,6 +76,17 @@ function ResultPanel({ actionState }: { actionState: ActionState }) {
   
   const displayUrl = actionState.imageUrl;
 
+  useEffect(() => {
+    if (actionState.error) {
+      toast({
+        title: 'Generation Error',
+        description: actionState.error,
+        variant: 'destructive',
+      });
+    }
+  }, [actionState.error, toast]);
+
+
   const handleCopyPrompt = () => {
     if (actionState.prompt) {
       navigator.clipboard.writeText(actionState.prompt);
@@ -160,14 +171,6 @@ export default function ImageGenerator() {
 
   useEffect(() => {
     if (!state) return;
-
-    if (state.error) {
-      toast({
-        title: 'Generation Error',
-        description: state.error,
-        variant: 'destructive',
-      });
-    }
 
     if (state.imageUrl && state.prompt) {
       if (prompt !== state.prompt) {
@@ -440,5 +443,3 @@ export default function ImageGenerator() {
     </div>
   );
 }
-
-    
