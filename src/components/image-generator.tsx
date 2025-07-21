@@ -70,9 +70,15 @@ function SubmitButton() {
   );
 }
 
-function ResultPanel({ actionState }: { actionState: ActionState }) {
-  const { toast } = useToast();
+function ResultPanel({ 
+  actionState,
+  onNewImage, 
+}: { 
+  actionState: ActionState,
+  onNewImage: (item: HistoryItem) => void,
+}) {
   const { pending } = useFormStatus();
+  const { toast } = useToast();
   
   const displayUrl = actionState.imageUrl;
 
@@ -84,7 +90,17 @@ function ResultPanel({ actionState }: { actionState: ActionState }) {
         variant: 'destructive',
       });
     }
-  }, [actionState.error, toast]);
+    if (actionState.imageUrl && actionState.prompt) {
+        const newItem: HistoryItem = {
+            id: `arty-ai-${Date.now()}`,
+            prompt: actionState.prompt,
+            imageUrl: actionState.imageUrl,
+            timestamp: Date.now(),
+          };
+        onNewImage(newItem);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [actionState.imageUrl, actionState.error, actionState.prompt]); // More specific dependencies
 
 
   const handleCopyPrompt = () => {
@@ -147,8 +163,11 @@ function ResultPanel({ actionState }: { actionState: ActionState }) {
 }
 
 export default function ImageGenerator() {
-  const initialState: ActionState = { imageUrl: null, error: null, prompt: null };
-  const [state, formAction] = useActionState(generateImageAction, initialState);
+  const [state, formAction] = useActionState(generateImageAction, {
+    imageUrl: null,
+    error: null,
+    prompt: null,
+  });
 
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-image');
@@ -169,31 +188,18 @@ export default function ImageGenerator() {
     }
   }, []);
 
-  useEffect(() => {
-    if (!state) return;
-
-    if (state.imageUrl && state.prompt) {
-      if (prompt !== state.prompt) {
-        setPrompt(state.prompt);
-      }
-
-      const newItem: HistoryItem = {
-        id: `arty-ai-${Date.now()}`,
-        prompt: state.prompt,
-        imageUrl: state.imageUrl,
-        timestamp: Date.now(),
-      };
-      
-      const newHistory = [newItem, ...history];
-      setHistory(newHistory);
-      try {
-        localStorage.setItem('arty-ai-history', JSON.stringify(newHistory));
-      } catch (error) {
-        console.error("Failed to save history to localStorage", error);
-      }
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]);
+  const handleNewImage = (newItem: HistoryItem) => {
+    setPrompt(newItem.prompt); // update prompt in textarea
+    setHistory(prevHistory => {
+        const newHistory = [newItem, ...prevHistory];
+        try {
+            localStorage.setItem('arty-ai-history', JSON.stringify(newHistory));
+        } catch (error) {
+            console.error("Failed to save history to localStorage", error);
+        }
+        return newHistory;
+    });
+  };
 
   const handleCopyHistoryPrompt = (prompt: string) => {
     navigator.clipboard.writeText(prompt);
@@ -389,7 +395,7 @@ export default function ImageGenerator() {
                                   return (
                                   <Card key={item.id} className="overflow-hidden flex flex-col">
                                       <div className="aspect-square w-full bg-card-foreground/5 relative">
-                                        <Image src={item.imageUrl} alt={item.prompt} layout="fill" className="object-contain" data-ai-hint="gallery photo" />
+                                        <Image src={item.imageUrl} alt={item.prompt} fill className="object-contain" data-ai-hint="gallery photo" />
                                       </div>
                                       <CardContent className="p-2 flex-grow">
                                         <p className="text-xs text-muted-foreground line-clamp-2">{item.prompt}</p>
@@ -438,7 +444,7 @@ export default function ImageGenerator() {
             </Card>
           </div>
           <div className={cn("lg:col-span-2", activeTab !== 'text-to-image' && 'hidden')}>
-            <ResultPanel actionState={state} />
+            <ResultPanel actionState={state} onNewImage={handleNewImage} />
           </div>
         </div>
       </form>
