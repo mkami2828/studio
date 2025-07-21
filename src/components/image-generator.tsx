@@ -100,7 +100,7 @@ function ResultPanel({
         onNewImage(newItem);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionState.imageUrl, actionState.error, actionState.prompt]); // More specific dependencies
+  }, [actionState.imageUrl, actionState.error, actionState.prompt]);
 
 
   const handleCopyPrompt = () => {
@@ -121,9 +121,9 @@ function ResultPanel({
               <CardDescription>Your generated image will appear here.</CardDescription>
           </div>
           {displayUrl && !pending && (
-            <div className="flex items-center gap-2">
-              <Button type="button" variant="outline" size="sm" onClick={handleCopyPrompt}><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
-              <Button asChild variant="outline" size="sm">
+            <div className="flex flex-col items-end gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={handleCopyPrompt} className="w-full"><Copy className="mr-2 h-4 w-4" /> Copy Prompt</Button>
+              <Button asChild variant="outline" size="sm" className="w-full">
                 <a href={`/api/download?url=${encodeURIComponent(displayUrl)}`}>
                   <Download className="mr-2 h-4 w-4" /> Download
                 </a>
@@ -162,292 +162,313 @@ function ResultPanel({
   );
 }
 
-export default function ImageGenerator() {
-  const [state, formAction] = useActionState(generateImageAction, {
-    imageUrl: null,
-    error: null,
-    prompt: null,
-  });
-
-  const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState('text-to-image');
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [selectedLayout, setSelectedLayout] = useState<LayoutKey>('default');
-  const [prompt, setPrompt] = useState('');
-  
-  const [advancedSettings, setAdvancedSettings] = useState(defaultAdvancedSettings);
-  
-  useEffect(() => {
-    try {
-      const storedHistory = localStorage.getItem('arty-ai-history');
-      if (storedHistory) {
-        setHistory(JSON.parse(storedHistory));
-      }
-    } catch (error) {
-        console.error("Failed to load history from localStorage", error);
-    }
-  }, []);
-
-  const handleNewImage = (newItem: HistoryItem) => {
-    setPrompt(newItem.prompt); // update prompt in textarea
-    setHistory(prevHistory => {
-        const newHistory = [newItem, ...prevHistory];
-        try {
-            localStorage.setItem('arty-ai-history', JSON.stringify(newHistory));
-        } catch (error) {
-            console.error("Failed to save history to localStorage", error);
-        }
-        return newHistory;
-    });
-  };
-
-  const handleCopyHistoryPrompt = (prompt: string) => {
-    navigator.clipboard.writeText(prompt);
-    toast({
-      title: 'Prompt Copied!',
-      description: 'The prompt has been copied to your clipboard.',
-    });
-  };
-
-  const handleClearHistory = () => {
-    setHistory([]);
-    try {
-      localStorage.removeItem('arty-ai-history');
-      toast({ title: 'History Cleared', description: 'Your image generation history has been removed.' });
-    } catch (error) {
-      console.error("Failed to clear history from localStorage", error);
-    }
-  };
-
-  const handleDeleteHistoryItem = (idToDelete: string) => {
-    setHistory(prevHistory => {
-      const updatedHistory = prevHistory.filter(item => item.id !== idToDelete);
+function ImageGeneratorForm() {
+    const { toast } = useToast();
+    const [activeTab, setActiveTab] = useState('text-to-image');
+    const [history, setHistory] = useState<HistoryItem[]>([]);
+    const [selectedLayout, setSelectedLayout] = useState<LayoutKey>('default');
+    const [prompt, setPrompt] = useState('');
+    
+    const [advancedSettings, setAdvancedSettings] = useState(defaultAdvancedSettings);
+    
+    useEffect(() => {
       try {
-        localStorage.setItem('arty-ai-history', JSON.stringify(updatedHistory));
-        toast({ title: 'Image Deleted', description: 'The image has been removed from your history.' });
-      } catch (error)
-      {
-        console.error("Failed to update history in localStorage", error);
-        toast({ title: 'Error', description: 'Could not delete the image from history.', variant: 'destructive' });
+        const storedHistory = localStorage.getItem('arty-ai-history');
+        if (storedHistory) {
+          setHistory(JSON.parse(storedHistory));
+        }
+      } catch (error) {
+          console.error("Failed to load history from localStorage", error);
       }
-      return updatedHistory;
-    });
-  };
+    }, []);
+  
+    const handleNewImage = (newItem: HistoryItem) => {
+      setPrompt(newItem.prompt); // update prompt in textarea
+      setHistory(prevHistory => {
+          const newHistory = [newItem, ...prevHistory];
+          try {
+              localStorage.setItem('arty-ai-history', JSON.stringify(newHistory));
+          } catch (error) {
+              console.error("Failed to save history to localStorage", error);
+          }
+          return newHistory;
+      });
+    };
+  
+    const handleCopyHistoryPrompt = (prompt: string) => {
+      navigator.clipboard.writeText(prompt);
+      toast({
+        title: 'Prompt Copied!',
+        description: 'The prompt has been copied to your clipboard.',
+      });
+    };
+  
+    const handleClearHistory = () => {
+      setHistory([]);
+      try {
+        localStorage.removeItem('arty-ai-history');
+        toast({ title: 'History Cleared', description: 'Your image generation history has been removed.' });
+      } catch (error) {
+        console.error("Failed to clear history from localStorage", error);
+      }
+    };
+  
+    const handleDeleteHistoryItem = (idToDelete: string) => {
+      setHistory(prevHistory => {
+        const updatedHistory = prevHistory.filter(item => item.id !== idToDelete);
+        try {
+          localStorage.setItem('arty-ai-history', JSON.stringify(updatedHistory));
+          toast({ title: 'Image Deleted', description: 'The image has been removed from your history.' });
+        } catch (error)
+        {
+          console.error("Failed to update history in localStorage", error);
+          toast({ title: 'Error', description: 'Could not delete the image from history.', variant: 'destructive' });
+        }
+        return updatedHistory;
+      });
+    };
+  
+    const handleRandomPrompt = () => {
+      const randomPrompt = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
+      setPrompt(randomPrompt);
+    };
+  
+    const handleResetAdvanced = () => {
+      setAdvancedSettings(defaultAdvancedSettings);
+      toast({ title: 'Advanced settings reset' });
+    };
 
-  const handleRandomPrompt = () => {
-    const randomPrompt = samplePrompts[Math.floor(Math.random() * samplePrompts.length)];
-    setPrompt(randomPrompt);
-  };
-
-  const handleResetAdvanced = () => {
-    setAdvancedSettings(defaultAdvancedSettings);
-    toast({ title: 'Advanced settings reset' });
-  };
-
-  return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <form action={formAction}>
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className={cn("lg:col-span-1", activeTab === 'history' && 'lg:col-span-3')}>
+    return (
+        <div className={cn("lg:col-span-1", activeTab === 'history' && 'lg:col-span-3')}>
             <Card>
-              <CardHeader>
+            <CardHeader>
                 <CardTitle>Image Generation</CardTitle>
                 <CardDescription>Create new images or view your history.</CardDescription>
-              </CardHeader>
-              <CardContent>
+            </CardHeader>
+            <CardContent>
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
+                <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="text-to-image">Text-to-Image</TabsTrigger>
                     <TabsTrigger value="history">History</TabsTrigger>
-                  </TabsList>
-                  <TabsContent value="text-to-image" className="mt-4">
+                </TabsList>
+                <TabsContent value="text-to-image" className="mt-4">
                     <div className="space-y-4">
-                      <input type="hidden" name="mode" value="text-to-image" />
-                      <input type="hidden" name="width" value={layouts[selectedLayout].width} />
-                      <input type="hidden" name="height" value={layouts[selectedLayout].height} />
+                    <input type="hidden" name="mode" value="text-to-image" />
+                    <input type="hidden" name="width" value={layouts[selectedLayout].width} />
+                    <input type="hidden" name="height" value={layouts[selectedLayout].height} />
 
-                      <div className="space-y-2">
+                    <div className="space-y-2">
                         <div className="flex justify-between items-center">
-                          <Label htmlFor="prompt-text">Prompt</Label>
-                          <Button type="button" variant="ghost" size="sm" onClick={handleRandomPrompt}>
+                        <Label htmlFor="prompt-text">Prompt</Label>
+                        <Button type="button" variant="ghost" size="sm" onClick={handleRandomPrompt}>
                             <Dices className="mr-2 h-4 w-4" />
                             Random
-                          </Button>
+                        </Button>
                         </div>
                         <Textarea id="prompt-text" name="prompt" placeholder="e.g., A beautiful sunset over the ocean" required value={prompt} onChange={(e) => setPrompt(e.target.value)} />
-                      </div>
+                    </div>
 
-                      <div className="space-y-2">
-                          <Label htmlFor="layout">Layout</Label>
-                          <Select onValueChange={(value: LayoutKey) => setSelectedLayout(value)} defaultValue={selectedLayout}>
+                    <div className="space-y-2">
+                        <Label htmlFor="layout">Layout</Label>
+                        <Select onValueChange={(value: LayoutKey) => setSelectedLayout(value)} defaultValue={selectedLayout}>
                             <SelectTrigger id="layout">
-                              <SelectValue placeholder="Select a layout" />
+                            <SelectValue placeholder="Select a layout" />
                             </SelectTrigger>
                             <SelectContent>
-                              {Object.entries(layouts).map(([key, { name, width, height }]) => (
-                                  <SelectItem key={key} value={key}>{name} ({width}x{height})</SelectItem>
-                              ))}
+                            {Object.entries(layouts).map(([key, { name, width, height }]) => (
+                                <SelectItem key={key} value={key}>{name} ({width}x{height})</SelectItem>
+                            ))}
                             </SelectContent>
-                          </Select>
-                      </div>
+                        </Select>
+                    </div>
                     
-                      <div className="space-y-2">
+                    <div className="space-y-2">
                         <Label htmlFor="seed">Seed</Label>
                         <Input id="seed" name="seed" type="number" placeholder="A random seed will be used" />
-                      </div>
-                      
-                      <Accordion type="single" collapsible>
+                    </div>
+                    
+                    <Accordion type="single" collapsible>
                         <AccordionItem value="advanced-settings">
-                          <AccordionTrigger>
+                        <AccordionTrigger>
                             <div className="flex items-center gap-2">
-                              <Settings className="h-4 w-4" />
-                              Advanced Settings
+                            <Settings className="h-4 w-4" />
+                            Advanced Settings
                             </div>
-                          </AccordionTrigger>
-                          <AccordionContent className="space-y-4 pt-4">
+                        </AccordionTrigger>
+                        <AccordionContent className="space-y-4 pt-4">
                             <div className="flex justify-end">
-                              <Button type="button" variant="ghost" size="sm" onClick={handleResetAdvanced}>
+                            <Button type="button" variant="ghost" size="sm" onClick={handleResetAdvanced}>
                                 <RotateCcw className="mr-2 h-4 w-4" />
                                 Reset
-                              </Button>
+                            </Button>
                             </div>
                             <div className="space-y-2">
-                              <Label htmlFor="model-select">Model</Label>
-                              <Select name="model" value={advancedSettings.model} onValueChange={(value) => setAdvancedSettings(s => ({...s, model: value}))}>
+                            <Label htmlFor="model-select">Model</Label>
+                            <Select name="model" value={advancedSettings.model} onValueChange={(value) => setAdvancedSettings(s => ({...s, model: value}))}>
                                 <SelectTrigger id="model-select">
-                                  <SelectValue placeholder="Select a model" />
+                                <SelectValue placeholder="Select a model" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  {models.map((model) => (
+                                {models.map((model) => (
                                     <SelectItem key={model} value={model}>{model}</SelectItem>
-                                  ))}
+                                ))}
                                 </SelectContent>
-                              </Select>
+                            </Select>
                             </div>
                             <div className="flex items-center justify-between rounded-lg border p-3">
-                              <Label htmlFor="enhance" className="flex flex-col space-y-1">
+                            <Label htmlFor="enhance" className="flex flex-col space-y-1">
                                 <span>Enhance Prompt</span>
                                 <span className="font-normal leading-snug text-muted-foreground text-xs">Let an LLM enhance your prompt for more detail.</span>
-                              </Label>
-                              <Switch id="enhance" name="enhance" checked={advancedSettings.enhance} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, enhance: checked}))} />
+                            </Label>
+                            <Switch id="enhance" name="enhance" checked={advancedSettings.enhance} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, enhance: checked}))} />
                             </div>
                             <div className="flex items-center justify-between rounded-lg border p-3">
-                              <Label htmlFor="nologo" className="flex flex-col space-y-1">
+                            <Label htmlFor="nologo" className="flex flex-col space-y-1">
                                 <span>No Logo</span>
                                 <span className="font-normal leading-snug text-muted-foreground text-xs">Disable the Pollinations logo overlay.</span>
-                              </Label>
-                              <Switch id="nologo" name="nologo" checked={advancedSettings.nologo} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, nologo: checked}))} />
+                            </Label>
+                            <Switch id="nologo" name="nologo" checked={advancedSettings.nologo} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, nologo: checked}))} />
                             </div>
                             <div className="flex items-center justify-between rounded-lg border p-3">
-                              <Label htmlFor="private" className="flex flex-col space-y-1">
+                            <Label htmlFor="private" className="flex flex-col space-y-1">
                                 <span>Private</span>
                                 <span className="font-normal leading-snug text-muted-foreground text-xs">Prevent image from appearing in public feed.</span>
-                              </Label>
-                              <Switch id="private" name="private" checked={advancedSettings.private} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, private: checked}))} />
+                            </Label>
+                            <Switch id="private" name="private" checked={advancedSettings.private} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, private: checked}))} />
                             </div>
                             <div className="flex items-center justify-between rounded-lg border p-3">
-                              <Label htmlFor="safe" className="flex flex-col space-y-1">
+                            <Label htmlFor="safe" className="flex flex-col space-y-1">
                                 <span>Safe Mode</span>
                                 <span className="font-normal leading-snug text-muted-foreground text-xs">Strict NSFW filtering (throws error if detected).</span>
-                              </Label>
-                              <Switch id="safe" name="safe" checked={advancedSettings.safe} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, safe: checked}))} />
+                            </Label>
+                            <Switch id="safe" name="safe" checked={advancedSettings.safe} onCheckedChange={(checked) => setAdvancedSettings(s => ({...s, safe: checked}))} />
                             </div>
-                          </AccordionContent>
+                        </AccordionContent>
                         </AccordionItem>
-                      </Accordion>
+                    </Accordion>
 
-                      <SubmitButton />
+                    <SubmitButton />
                     </div>
-                  </TabsContent>
-                  <TabsContent value="history" className="mt-4">
+                </TabsContent>
+                <TabsContent value="history" className="mt-4">
                     <div className="space-y-4">
-                      <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between">
                         <p className="text-sm text-muted-foreground">Your past generations.</p>
                         {history.length > 0 && (
-                          <AlertDialog>
+                        <AlertDialog>
                             <AlertDialogTrigger asChild>
-                              <Button type="button" variant="outline" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Clear All</Button>
+                            <Button type="button" variant="outline" size="sm"><Trash2 className="mr-2 h-4 w-4" /> Clear All</Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
-                              <AlertDialogHeader>
+                            <AlertDialogHeader>
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                  This will permanently delete your entire generation history. This action cannot be undone.
+                                This will permanently delete your entire generation history. This action cannot be undone.
                                 </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
                                 <AlertDialogAction onClick={handleClearHistory}>Continue</AlertDialogAction>
-                              </AlertDialogFooter>
+                            </AlertDialogFooter>
                             </AlertDialogContent>
-                          </AlertDialog>
+                        </AlertDialog>
                         )}
-                      </div>
-                      <ScrollArea className="h-96 w-full rounded-md border">
-                          {history.length === 0 ? (
-                            <div className="flex h-full items-center justify-center">
-                              <p className="text-center text-muted-foreground py-16">No history yet. Generate an image to get started!</p>
-                            </div>
-                          ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
-                              {history.map(item => {
-                                  const downloadUrl = `/api/download?url=${encodeURIComponent(item.imageUrl)}`;
-                                  return (
-                                  <Card key={item.id} className="overflow-hidden flex flex-col">
-                                      <div className="aspect-square w-full bg-card-foreground/5 relative">
-                                        <Image src={item.imageUrl} alt={item.prompt} fill className="object-contain" data-ai-hint="gallery photo" />
-                                      </div>
-                                      <CardContent className="p-2 flex-grow">
-                                        <p className="text-xs text-muted-foreground line-clamp-2">{item.prompt}</p>
-                                      </CardContent>
-                                      <CardFooter className="p-2 pt-0">
-                                        <div className="flex flex-col w-full items-stretch gap-2">
-                                            <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
-                                                <Copy className="mr-1 h-3 w-3" /> Copy Prompt
-                                            </Button>
-                                            <Button asChild variant="secondary" size="sm" className="h-7 px-2 text-xs">
-                                                <a href={downloadUrl}>
-                                                    <Download className="mr-1 h-3 w-3" /> Download
-                                                </a>
-                                            </Button>
-                                            <AlertDialog>
-                                                <AlertDialogTrigger asChild>
-                                                    <Button type="button" variant="destructive" size="sm" className="h-7 px-2 text-xs">
-                                                        <Trash2 className="mr-1 h-3 w-3" /> Delete
-                                                    </Button>
-                                                </AlertDialogTrigger>
-                                                <AlertDialogContent>
-                                                    <AlertDialogHeader>
-                                                        <AlertDialogTitle>Delete Image?</AlertDialogTitle>
-                                                        <AlertDialogDescription>
-                                                        This will permanently delete this image from your history. This action cannot be undone.
-                                                        </AlertDialogDescription>
-                                                    </AlertDialogHeader>
-                                                    <AlertDialogFooter>
-                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                        <AlertDialogAction onClick={() => handleDeleteHistoryItem(item.id)}>Delete</AlertDialogAction>
-                                                    </AlertDialogFooter>
-                                                </AlertDialogContent>
-                                            </AlertDialog>
-                                        </div>
-                                      </CardFooter>
-                                  </Card>
-                                  );
-                              })}
-                            </div>
-                          )}
-                      </ScrollArea>
                     </div>
-                  </TabsContent>
+                    <ScrollArea className="h-96 w-full rounded-md border">
+                        {history.length === 0 ? (
+                            <div className="flex h-full items-center justify-center">
+                            <p className="text-center text-muted-foreground py-16">No history yet. Generate an image to get started!</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
+                            {history.map(item => {
+                                const downloadUrl = `/api/download?url=${encodeURIComponent(item.imageUrl)}`;
+                                return (
+                                <Card key={item.id} className="overflow-hidden flex flex-col">
+                                    <div className="aspect-square w-full bg-card-foreground/5 relative">
+                                        <Image src={item.imageUrl} alt={item.prompt} fill className="object-contain" data-ai-hint="gallery photo" />
+                                    </div>
+                                    <CardContent className="p-2 flex-grow">
+                                    <p className="text-xs text-muted-foreground line-clamp-2">{item.prompt}</p>
+                                    </CardContent>
+                                    <CardFooter className="p-2 pt-0">
+                                    <div className="flex flex-col w-full items-stretch gap-2">
+                                        <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
+                                            <Copy className="mr-1 h-3 w-3" /> Copy Prompt
+                                        </Button>
+                                        <Button asChild variant="secondary" size="sm" className="h-7 px-2 text-xs">
+                                            <a href={downloadUrl}>
+                                                <Download className="mr-1 h-3 w-3" /> Download
+                                            </a>
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button type="button" variant="destructive" size="sm" className="h-7 px-2 text-xs">
+                                                    <Trash2 className="mr-1 h-3 w-3" /> Delete
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Delete Image?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                    This will permanently delete this image from your history. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteHistoryItem(item.id)}>Delete</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
+                                    </CardFooter>
+                                </Card>
+                                );
+                            })}
+                            </div>
+                        )}
+                    </ScrollArea>
+                    </div>
+                </TabsContent>
                 </Tabs>
-              </CardContent>
+            </CardContent>
             </Card>
-          </div>
-          <div className={cn("lg:col-span-2", activeTab !== 'text-to-image' && 'hidden')}>
-            <ResultPanel actionState={state} onNewImage={handleNewImage} />
-          </div>
         </div>
-      </form>
-    </div>
-  );
+    );
+}
+
+export default function ImageGenerator() {
+    const [state, formAction] = useActionState(generateImageAction, {
+        imageUrl: null,
+        error: null,
+        prompt: null,
+      });
+
+      const [activeTab, setActiveTab] = useState('text-to-image');
+      const [history, setHistory] = useState<HistoryItem[]>([]);
+    
+      const handleNewImage = (newItem: HistoryItem) => {
+        setHistory(prevHistory => {
+            const newHistory = [newItem, ...prevHistory];
+            try {
+                localStorage.setItem('arty-ai-history', JSON.stringify(newHistory));
+            } catch (error) {
+                console.error("Failed to save history to localStorage", error);
+            }
+            return newHistory;
+        });
+      };
+
+    return (
+        <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+          <form action={formAction}>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <ImageGeneratorForm />
+              <div className={cn("lg:col-span-2", activeTab === 'text-to-image' && 'hidden', activeTab !== 'text-to-image' && 'hidden')}>
+                <ResultPanel actionState={state} onNewImage={handleNewImage} />
+              </div>
+            </div>
+          </form>
+        </div>
+      );
 }
