@@ -1,3 +1,6 @@
+import { Share2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+
 export default function Header() {
   return (
     <header className="sticky top-0 z-50 border-b bg-card">
@@ -69,6 +72,12 @@ export default function Header() {
               Arty.ai
             </h1>
           </div>
+          <Button asChild>
+            <a href="https://play.google.com/store/apps/details?id=com.kaafdevs.artyai" target="_blank" rel="noopener noreferrer">
+              <Share2 className="mr-2 h-4 w-4" />
+              Share App
+            </a>
+          </Button>
         </div>
       </div>
     </header>
