@@ -10,7 +10,7 @@ export default function Header() {
   const handleShare = async () => {
     const shareData = {
       title: 'Arty.ai - AI Image Generator',
-      text: 'Check out Arty.ai! You can generate amazing images with AI. Download it here:',
+      text: 'Unleash your creativity with Arty.ai! I\'m generating incredible images using AI, and you can too. Download the app here:',
       url: 'https://play.google.com/store/apps/details?id=com.kaafdevs.artyai',
     };
 
