@@ -61,11 +61,12 @@ const defaultAdvancedSettings = {
 };
 
 
-function SubmitButton() {
+function SubmitButton({ isGenerating }: { isGenerating: boolean }) {
   const { pending } = useFormStatus();
+  const isDisabled = isGenerating || pending;
   return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? <LoaderCircle className="animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+    <Button type="submit" disabled={isDisabled} className="w-full">
+      {isDisabled ? <LoaderCircle className="animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
       Generate
     </Button>
   );
@@ -174,28 +175,28 @@ function GenerationForm({
       });
     }
 
-    if (actionState.imageUrl && actionState.prompt) {
-      if (!isGenerating) {
-        setPrompt(actionState.prompt);
+    if (actionState.imageUrl && actionState.prompt && !isGenerating) {
+      setPrompt(actionState.prompt);
 
-        const newItem: HistoryItem = {
-          id: `arty-ai-${Date.now()}`,
-          prompt: actionState.prompt,
-          imageUrl: actionState.imageUrl,
-          timestamp: Date.now(),
-        };
+      const newItem: HistoryItem = {
+        id: `arty-ai-${Date.now()}`,
+        prompt: actionState.prompt,
+        imageUrl: actionState.imageUrl,
+        timestamp: Date.now(),
+      };
 
-        const newHistory = [newItem, ...history];
-        setHistory(newHistory);
+      setHistory(prevHistory => {
+        const newHistory = [newItem, ...prevHistory];
         try {
           localStorage.setItem('arty-ai-history', JSON.stringify(newHistory));
         } catch (error) {
           console.error("Failed to save history to localStorage", error);
         }
-      }
+        return newHistory;
+      });
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionState, isGenerating]);
+  }, [actionState, isGenerating, toast]);
 
   
   const handleCopyHistoryPrompt = (prompt: string) => {
@@ -350,7 +351,7 @@ function GenerationForm({
                       </AccordionItem>
                     </Accordion>
 
-                    <SubmitButton />
+                    <SubmitButton isGenerating={isGenerating} />
                   </div>
                 </TabsContent>
                 <TabsContent value="history" className="mt-4">
@@ -472,3 +473,5 @@ export default function ImageGenerator() {
     </div>
   );
 }
+
+    
