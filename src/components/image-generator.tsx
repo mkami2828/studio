@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect, useState, useActionState, useRef } from 'react';
@@ -62,12 +61,13 @@ const defaultAdvancedSettings = {
 };
 
 
-function SubmitButton({ children }: { children: React.ReactNode }) {
+function SubmitButton({ isGenerating }: { isGenerating: boolean }) {
   const { pending } = useFormStatus();
+  const disabled = isGenerating || pending;
   return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? <LoaderCircle className="animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
-      {children}
+    <Button type="submit" disabled={disabled} className="w-full">
+      {disabled ? <LoaderCircle className="animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+      Generate
     </Button>
   );
 }
@@ -152,21 +152,8 @@ export default function ImageGenerator() {
   
   const wrappedFormAction = async (formData: FormData) => {
     setIsGenerating(true);
-    const startTime = Date.now();
-    
     await formAction(formData);
-
-    const endTime = Date.now();
-    const duration = endTime - startTime;
-    const minDuration = 2000;
-
-    if (duration < minDuration) {
-        setTimeout(() => {
-            setIsGenerating(false);
-        }, minDuration - duration);
-    } else {
-        setIsGenerating(false);
-    }
+    setIsGenerating(false);
   };
 
   useEffect(() => {
@@ -368,7 +355,7 @@ export default function ImageGenerator() {
                       </AccordionItem>
                     </Accordion>
 
-                    <SubmitButton>Generate</SubmitButton>
+                    <SubmitButton isGenerating={isGenerating} />
                   </div>
                 </TabsContent>
                 <TabsContent value="history" className="mt-4">
@@ -462,4 +449,5 @@ export default function ImageGenerator() {
       </form>
     </div>
   );
-}
+
+    
