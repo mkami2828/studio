@@ -390,19 +390,19 @@ export default function ImageGenerator() {
                                       </CardContent>
                                       <CardFooter className="p-2 flex-col items-start gap-2">
                                         <p className="text-xs text-muted-foreground line-clamp-2">{item.prompt}</p>
-                                        <div className="flex w-full items-center justify-between gap-2">
-                                            <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs flex-1" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
-                                                <Copy className="mr-1 h-3 w-3" /> Copy
+                                        <div className="flex flex-col w-full items-stretch gap-2">
+                                            <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
+                                                <Copy className="mr-1 h-3 w-3" /> Copy Prompt
                                             </Button>
-                                            <Button asChild variant="secondary" size="sm" className="h-7 px-2 text-xs flex-1">
+                                            <Button asChild variant="secondary" size="sm" className="h-7 px-2 text-xs">
                                                 <a href={downloadUrl}>
                                                     <Download className="mr-1 h-3 w-3" /> Download
                                                 </a>
                                             </Button>
                                             <AlertDialog>
                                                 <AlertDialogTrigger asChild>
-                                                    <Button type="button" variant="destructive" size="icon" className="h-7 w-7">
-                                                        <Trash2 className="h-3 w-3" />
+                                                    <Button type="button" variant="destructive" size="sm" className="h-7 px-2 text-xs">
+                                                        <Trash2 className="mr-1 h-3 w-3" /> Delete
                                                     </Button>
                                                 </AlertDialogTrigger>
                                                 <AlertDialogContent>
