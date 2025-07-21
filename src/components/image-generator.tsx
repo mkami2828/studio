@@ -1,13 +1,13 @@
 
 'use client';
 
-import { useEffect, useState, useActionState, useRef } from 'react';
+import { useEffect, useState, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
 import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings, Trash2, Dices, Copy, RotateCcw } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -382,45 +382,44 @@ export default function ImageGenerator() {
                           ) : (
                             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
                               {history.map(item => {
-                                  const displayUrl = item.imageUrl;
                                   const downloadUrl = `/api/download?url=${encodeURIComponent(item.imageUrl)}`;
                                   return (
-                                  <Card key={item.id} className="overflow-hidden group">
-                                      <div className="aspect-square w-full bg-card-foreground/5 relative">
-                                      <Image src={displayUrl} alt={item.prompt} layout="fill" className="object-contain" data-ai-hint="gallery photo" />
-                                      <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-2 text-center space-y-2">
-                                          <p className="text-xs text-primary-foreground line-clamp-3 mb-2">{item.prompt}</p>
-                                          <div className="flex flex-wrap items-center justify-center gap-2">
-                                          <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
-                                              <Copy className="mr-1 h-3 w-3" /> Copy
-                                          </Button>
-                                          <Button asChild variant="secondary" size="sm" className="h-7 px-2 text-xs">
-                                              <a href={downloadUrl}>
-                                                  <Download className="mr-1 h-3 w-3" /> Download
-                                              </a>
-                                          </Button>
-                                          <AlertDialog>
-                                              <AlertDialogTrigger asChild>
-                                              <Button type="button" variant="destructive" size="sm" className="h-7 px-2 text-xs">
-                                                  <Trash2 className="mr-1 h-3 w-3" /> Delete
-                                              </Button>
-                                              </AlertDialogTrigger>
-                                              <AlertDialogContent>
-                                              <AlertDialogHeader>
-                                                  <AlertDialogTitle>Delete Image?</AlertDialogTitle>
-                                                  <AlertDialogDescription>
-                                                  This will permanently delete this image from your history. This action cannot be undone.
-                                                  </AlertDialogDescription>
-                                              </AlertDialogHeader>
-                                              <AlertDialogFooter>
-                                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                  <AlertDialogAction onClick={() => handleDeleteHistoryItem(item.id)}>Delete</AlertDialogAction>
-                                              </AlertDialogFooter>
-                                              </AlertDialogContent>
-                                          </AlertDialog>
-                                          </div>
-                                      </div>
-                                      </div>
+                                  <Card key={item.id} className="overflow-hidden flex flex-col">
+                                      <CardContent className="p-0 aspect-square w-full bg-card-foreground/5 relative">
+                                        <Image src={item.imageUrl} alt={item.prompt} layout="fill" className="object-contain" data-ai-hint="gallery photo" />
+                                      </CardContent>
+                                      <CardFooter className="p-2 flex-col items-start gap-2">
+                                        <p className="text-xs text-muted-foreground line-clamp-2">{item.prompt}</p>
+                                        <div className="flex w-full items-center justify-between gap-2">
+                                            <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs flex-1" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
+                                                <Copy className="mr-1 h-3 w-3" /> Copy
+                                            </Button>
+                                            <Button asChild variant="secondary" size="sm" className="h-7 px-2 text-xs flex-1">
+                                                <a href={downloadUrl}>
+                                                    <Download className="mr-1 h-3 w-3" /> Download
+                                                </a>
+                                            </Button>
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button type="button" variant="destructive" size="icon" className="h-7 w-7">
+                                                        <Trash2 className="h-3 w-3" />
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                        <AlertDialogTitle>Delete Image?</AlertDialogTitle>
+                                                        <AlertDialogDescription>
+                                                        This will permanently delete this image from your history. This action cannot be undone.
+                                                        </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                        <AlertDialogAction onClick={() => handleDeleteHistoryItem(item.id)}>Delete</AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </div>
+                                      </CardFooter>
                                   </Card>
                                   );
                               })}
@@ -433,13 +432,13 @@ export default function ImageGenerator() {
               </CardContent>
             </Card>
           </div>
-          {activeTab === 'text-to-image' && (
-            <div className="lg:col-span-2">
-              <ResultPanel actionState={state} />
-            </div>
-          )}
+          <div className={cn("lg:col-span-2", activeTab !== 'text-to-image' && 'hidden')}>
+            <ResultPanel actionState={state} />
+          </div>
         </div>
       </form>
     </div>
   );
 }
+
+    
