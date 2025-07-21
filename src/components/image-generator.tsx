@@ -151,9 +151,21 @@ export default function ImageGenerator() {
   const [advancedSettings, setAdvancedSettings] = useState(defaultAdvancedSettings);
   
   const wrappedFormAction = async (formData: FormData) => {
+    const startTime = Date.now();
     setIsGenerating(true);
+
     await formAction(formData);
-    setIsGenerating(false);
+
+    const duration = Date.now() - startTime;
+    const minDuration = 4000; // 4 seconds
+
+    if (duration < minDuration) {
+      setTimeout(() => {
+        setIsGenerating(false);
+      }, minDuration - duration);
+    } else {
+      setIsGenerating(false);
+    }
   };
 
   useEffect(() => {
@@ -449,5 +461,4 @@ export default function ImageGenerator() {
       </form>
     </div>
   );
-
-    
+}
