@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useEffect, useState, useActionState } from 'react';
+import { useEffect, useState, useActionState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import Image from 'next/image';
 import { Download, Image as ImageIcon, LoaderCircle, Sparkles, Settings, Trash2, Dices, Copy, RotateCcw } from 'lucide-react';
@@ -388,11 +388,13 @@ export default function ImageGenerator() {
                                   const downloadUrl = `/api/download?url=${encodeURIComponent(item.imageUrl)}`;
                                   return (
                                   <Card key={item.id} className="overflow-hidden flex flex-col">
-                                      <CardContent className="p-0 aspect-square w-full bg-card-foreground/5 relative">
+                                      <div className="aspect-square w-full bg-card-foreground/5 relative">
                                         <Image src={item.imageUrl} alt={item.prompt} layout="fill" className="object-contain" data-ai-hint="gallery photo" />
-                                      </CardContent>
-                                      <CardFooter className="p-2 flex-col items-start gap-2">
+                                      </div>
+                                      <CardContent className="p-2 flex-grow">
                                         <p className="text-xs text-muted-foreground line-clamp-2">{item.prompt}</p>
+                                      </CardContent>
+                                      <CardFooter className="p-2 pt-0">
                                         <div className="flex flex-col w-full items-stretch gap-2">
                                             <Button type="button" variant="secondary" size="sm" className="h-7 px-2 text-xs" onClick={() => handleCopyHistoryPrompt(item.prompt)}>
                                                 <Copy className="mr-1 h-3 w-3" /> Copy Prompt
