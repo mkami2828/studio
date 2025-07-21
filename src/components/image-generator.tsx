@@ -137,10 +137,11 @@ function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, 
 
 function GenerationForm({
   actionState,
+  isGenerating
 }: {
   actionState: ActionState,
+  isGenerating: boolean
 }) {
-  const { pending } = useFormStatus();
   const formRef = useRef<HTMLFormElement>(null);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-image');
@@ -174,7 +175,7 @@ function GenerationForm({
     }
 
     if (actionState.imageUrl && actionState.prompt) {
-      if (!pending) {
+      if (!isGenerating) {
         setPrompt(actionState.prompt);
 
         const newItem: HistoryItem = {
@@ -194,7 +195,7 @@ function GenerationForm({
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [actionState, pending]);
+  }, [actionState, isGenerating]);
 
   
   const handleCopyHistoryPrompt = (prompt: string) => {
@@ -437,7 +438,7 @@ function GenerationForm({
         </div>
         {activeTab === 'text-to-image' && (
           <div className="lg:col-span-2">
-            <ResultPanel actionState={actionState} isGenerating={pending} />
+            <ResultPanel actionState={actionState} isGenerating={isGenerating} />
           </div>
         )}
       </div>
@@ -448,11 +449,25 @@ function GenerationForm({
 export default function ImageGenerator() {
   const initialState: ActionState = { imageUrl: null, error: null, prompt: null };
   const [state, formAction] = useActionState(generateImageAction, initialState);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    // When formAction is done (i.e., not pending), set isGenerating to false.
+    // This assumes that the `state` object is updated upon completion.
+    if (state.imageUrl || state.error) {
+        setIsGenerating(false);
+    }
+  }, [state]);
+
+  const handleFormAction = (formData: FormData) => {
+    setIsGenerating(true);
+    formAction(formData);
+  };
 
   return (
     <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <form action={formAction}>
-        <GenerationForm actionState={state} />
+      <form action={handleFormAction}>
+        <GenerationForm actionState={state} isGenerating={isGenerating} />
       </form>
     </div>
   );
