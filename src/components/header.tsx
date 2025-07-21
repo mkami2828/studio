@@ -8,10 +8,13 @@ export default function Header() {
   const { toast } = useToast();
 
   const handleShare = async () => {
+    const shareText = 'Unleash your creativity with Arty.ai! I\'m generating incredible images using AI, and you can too. Download the app here:';
+    const shareUrl = 'https://play.google.com/store/apps/details?id=com.kaafdevs.artyai';
+
     const shareData = {
       title: 'Arty.ai - AI Image Generator',
-      text: 'Unleash your creativity with Arty.ai! I\'m generating incredible images using AI, and you can too. Download the app here:',
-      url: 'https://play.google.com/store/apps/details?id=com.kaafdevs.artyai',
+      text: `${shareText}\n\n${shareUrl}`,
+      url: shareUrl,
     };
 
     if (navigator.share) {
@@ -25,14 +28,14 @@ export default function Header() {
     } else {
       // Fallback for browsers that do not support the Web Share API
       try {
-        await navigator.clipboard.writeText(shareData.url);
+        await navigator.clipboard.writeText(shareUrl);
         toast({
           title: 'Link Copied!',
           description: 'The app link has been copied to your clipboard.',
         });
       } catch (err) {
         // If clipboard also fails, just open the link
-        window.open(shareData.url, '_blank', 'noopener,noreferrer');
+        window.open(shareUrl, '_blank', 'noopener,noreferrer');
       }
     }
   };
