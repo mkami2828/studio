@@ -61,12 +61,11 @@ const defaultAdvancedSettings = {
 };
 
 
-function SubmitButton({ isGenerating }: { isGenerating: boolean }) {
+function SubmitButton() {
   const { pending } = useFormStatus();
-  const disabled = isGenerating || pending;
   return (
-    <Button type="submit" disabled={disabled} className="w-full">
-      {disabled ? <LoaderCircle className="animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
+    <Button type="submit" disabled={pending} className="w-full">
+      {pending ? <LoaderCircle className="animate-spin" /> : <Sparkles className="mr-2 h-4 w-4" />}
       Generate
     </Button>
   );
@@ -136,38 +135,22 @@ function ResultPanel({ actionState, isGenerating }: { actionState: ActionState, 
   );
 }
 
-export default function ImageGenerator() {
+function GenerationForm({
+  actionState,
+}: {
+  actionState: ActionState,
+}) {
+  const { pending } = useFormStatus();
   const formRef = useRef<HTMLFormElement>(null);
-  const initialState: ActionState = { imageUrl: null, error: null, prompt: null };
-  const [state, formAction] = useActionState(generateImageAction, initialState);
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState('text-to-image');
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [selectedLayout, setSelectedLayout] = useState<LayoutKey>('default');
   const [prompt, setPrompt] = useState('');
-  const [isGenerating, setIsGenerating] = useState(false);
   
   // State for advanced settings
   const [advancedSettings, setAdvancedSettings] = useState(defaultAdvancedSettings);
   
-  const wrappedFormAction = async (formData: FormData) => {
-    const startTime = Date.now();
-    setIsGenerating(true);
-
-    await formAction(formData);
-
-    const duration = Date.now() - startTime;
-    const minDuration = 4000; // 4 seconds
-
-    if (duration < minDuration) {
-      setTimeout(() => {
-        setIsGenerating(false);
-      }, minDuration - duration);
-    } else {
-      setIsGenerating(false);
-    }
-  };
-
   useEffect(() => {
     try {
       const storedHistory = localStorage.getItem('arty-ai-history');
@@ -180,36 +163,38 @@ export default function ImageGenerator() {
   }, []);
 
   useEffect(() => {
-    if (!state) return;
+    if (!actionState) return;
 
-    if (state.error) {
+    if (actionState.error) {
       toast({
         title: 'Generation Error',
-        description: state.error,
+        description: actionState.error,
         variant: 'destructive',
       });
     }
 
-    if (state.imageUrl && state.prompt) {
-      setPrompt(state.prompt);
+    if (actionState.imageUrl && actionState.prompt) {
+      if (!pending) {
+        setPrompt(actionState.prompt);
 
-      const newItem: HistoryItem = {
-        id: `arty-ai-${Date.now()}`,
-        prompt: state.prompt,
-        imageUrl: state.imageUrl,
-        timestamp: Date.now(),
-      };
+        const newItem: HistoryItem = {
+          id: `arty-ai-${Date.now()}`,
+          prompt: actionState.prompt,
+          imageUrl: actionState.imageUrl,
+          timestamp: Date.now(),
+        };
 
-      const newHistory = [newItem, ...history];
-      setHistory(newHistory);
-      try {
-        localStorage.setItem('arty-ai-history', JSON.stringify(newHistory));
-      } catch (error) {
-        console.error("Failed to save history to localStorage", error);
+        const newHistory = [newItem, ...history];
+        setHistory(newHistory);
+        try {
+          localStorage.setItem('arty-ai-history', JSON.stringify(newHistory));
+        } catch (error) {
+          console.error("Failed to save history to localStorage", error);
+        }
       }
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state]);
+  }, [actionState, pending]);
 
   
   const handleCopyHistoryPrompt = (prompt: string) => {
@@ -254,11 +239,8 @@ export default function ImageGenerator() {
     setAdvancedSettings(defaultAdvancedSettings);
     toast({ title: 'Advanced settings reset' });
   };
-
-
   return (
-    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
-      <form ref={formRef} action={wrappedFormAction} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className={cn("lg:col-span-1", activeTab === 'history' && 'lg:col-span-3')}>
           <Card>
             <CardHeader>
@@ -367,7 +349,7 @@ export default function ImageGenerator() {
                       </AccordionItem>
                     </Accordion>
 
-                    <SubmitButton isGenerating={isGenerating} />
+                    <SubmitButton />
                   </div>
                 </TabsContent>
                 <TabsContent value="history" className="mt-4">
@@ -455,9 +437,22 @@ export default function ImageGenerator() {
         </div>
         {activeTab === 'text-to-image' && (
           <div className="lg:col-span-2">
-            <ResultPanel actionState={state} isGenerating={isGenerating} />
+            <ResultPanel actionState={actionState} isGenerating={pending} />
           </div>
         )}
+      </div>
+  )
+}
+
+
+export default function ImageGenerator() {
+  const initialState: ActionState = { imageUrl: null, error: null, prompt: null };
+  const [state, formAction] = useActionState(generateImageAction, initialState);
+
+  return (
+    <div className="container mx-auto p-4 sm:p-6 lg:p-8">
+      <form action={formAction}>
+        <GenerationForm actionState={state} />
       </form>
     </div>
   );
