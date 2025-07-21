@@ -1,7 +1,42 @@
+'use client';
+
 import { Share2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 export default function Header() {
+  const { toast } = useToast();
+
+  const handleShare = async () => {
+    const shareData = {
+      title: 'Arty.ai - AI Image Generator',
+      text: 'Check out Arty.ai! You can generate amazing images with AI. Download it here:',
+      url: 'https://play.google.com/store/apps/details?id=com.kaafdevs.artyai',
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch (error) {
+        // Handle cases where the user cancels the share dialog, etc.
+        // We don't need to show an error toast here as it's expected user behavior.
+        console.log('Share was cancelled or failed', error);
+      }
+    } else {
+      // Fallback for browsers that do not support the Web Share API
+      try {
+        await navigator.clipboard.writeText(shareData.url);
+        toast({
+          title: 'Link Copied!',
+          description: 'The app link has been copied to your clipboard.',
+        });
+      } catch (err) {
+        // If clipboard also fails, just open the link
+        window.open(shareData.url, '_blank', 'noopener,noreferrer');
+      }
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 border-b bg-card">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
@@ -72,11 +107,9 @@ export default function Header() {
               Arty.ai
             </h1>
           </div>
-          <Button asChild>
-            <a href="https://play.google.com/store/apps/details?id=com.kaafdevs.artyai" target="_blank" rel="noopener noreferrer">
+          <Button onClick={handleShare}>
               <Share2 className="mr-2 h-4 w-4" />
               Share App
-            </a>
           </Button>
         </div>
       </div>
